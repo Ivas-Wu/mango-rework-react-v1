@@ -5,12 +5,13 @@ import { BoardService } from '../services/BoardService';
 import { TileService } from '../services/TilesService';
 import { TileProperties, TileState } from './Tiles/TileModels';
 import { BoardTileProperties, BoardTileState } from './Board/BoardTileModels';
+import GameOverModal from './Utl/GameOverModal';
 
 interface GameParentProps {
     height: number;
 }
 
-const GameParent: React.FC<GameParentProps> = ({height}) => {
+const GameParent: React.FC<GameParentProps> = ({ height }) => {
     const [selectedTile, setSelectedTile] = useState<number | null>(null); // Based on tile idx
     const [selectedBoardTile, setSelectedBoardTile] = useState<number | null>(null); // Based on board idx
 
@@ -21,8 +22,17 @@ const GameParent: React.FC<GameParentProps> = ({height}) => {
     const [tileToPair, setTileToPair] = useState<number | null>(null);
     const [tileToClear, setTileToClear] = useState<number | null>(null);
 
+    const [gameDone, setGameDone] = useState<boolean>(false);
+
     const boardService = BoardService.getInstance();
     const tileService = TileService.getInstance();
+
+    useEffect(() => {
+        boardService.getEventHandlerInstance().on('GameWon', (message) => {
+            console.log(message); // debugging
+            setGameDone(true);
+        });
+    }, []);
 
     useEffect(() => {
         if (selectedTile != null) {
@@ -57,7 +67,7 @@ const GameParent: React.FC<GameParentProps> = ({height}) => {
 
     const updateFullBoardTile = (tile?: BoardTileProperties) => {
         if (selectedBoardTile == null) return
-        setSelectedBoardTileFull(tile != undefined ? tile : boardService.getBoardTileByIdx(selectedBoardTile))
+        setSelectedBoardTileFull(tile !== undefined ? tile : boardService.getBoardTileByIdx(selectedBoardTile))
     };
 
     const updateFullTile = (tile?: TileProperties) => {
@@ -74,12 +84,44 @@ const GameParent: React.FC<GameParentProps> = ({height}) => {
         setTileToClear(boardService.getBoardTileByTileIdx(idx)?.idx ?? null);
     };
 
+    const resetGame = () => {
+        setGameDone(false);
+        boardService.resetBoard();
+        setSelectedBoardTile(null);
+        setSelectedTile(null);
+        setSelectedBoardTileFull(null);
+        setSelectedTileFull(null);
+        setValidPair(false);
+        setTileToClear(null);
+        setTileToPair(null);
+    }
+
     return (
-        <div className={`grid grid-cols-2 h-[93vh] flex-1 overflow-auto`}>
-            <div className='flex flex-col h-full p-4'>
-                <TileParent selectedTile={selectedTile} validCommit={validPair} setSelectedTile={setSelectedTile} linkTile={linkSelectedTiles} clearParentTile={clearParentTile}></TileParent>
+        <div className={`grid grid-cols-2 h-[${height}vh] flex-1 overflow-auto`}>
+            <div className={`flex flex-col p-4 h-[${height}vh]`}>
+                <TileParent
+                    selectedTile={selectedTile}
+                    validCommit={validPair}
+                    triggerReset={!gameDone}
+                    setSelectedTile={setSelectedTile}
+                    linkTile={linkSelectedTiles}
+                    clearParentTile={clearParentTile}
+                />
             </div>
-            <Board selectedBoardTile={selectedBoardTile} tileToPair={tileToPair} tileToClear={tileToClear} setSelectedBoardTile={setSelectedBoardTile} refreshBoardState={() => updateFullBoardTile()}></Board>
+            <Board
+                selectedBoardTile={selectedBoardTile}
+                tileToPair={tileToPair}
+                tileToClear={tileToClear}
+                triggerReset={!gameDone}
+                setSelectedBoardTile={setSelectedBoardTile}
+                refreshBoardState={() => updateFullBoardTile()}
+            />
+            {gameDone && (
+                <GameOverModal
+                    win={true}
+                    closeModal={resetGame}
+                />
+            )}
         </div>
     );
 }

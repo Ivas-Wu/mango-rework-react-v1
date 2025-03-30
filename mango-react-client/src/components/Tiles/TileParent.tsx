@@ -11,12 +11,13 @@ import Operators from './Operators';
 interface TileParentProps {
     selectedTile: number | null;
     validCommit: boolean;
+    triggerReset: boolean;
     setSelectedTile: (idx: number | null) => void;
     linkTile: () => void;
     clearParentTile: (idx: number) => void;
 }
 
-const TileParent: React.FC<TileParentProps> = ({ selectedTile, validCommit, setSelectedTile, linkTile, clearParentTile }) => {
+const TileParent: React.FC<TileParentProps> = ({ selectedTile, validCommit, triggerReset, setSelectedTile, linkTile, clearParentTile }) => {
     const [basicTiles, setBasicTiles] = useState<TileProperties[]>([]);
     const [advancedTiles, setAdvancedTiles] = useState<TileProperties[]>([]);
 
@@ -24,7 +25,15 @@ const TileParent: React.FC<TileParentProps> = ({ selectedTile, validCommit, setS
     const [selectedOperator, setSelectedOperator] = useState<Operator | null>(null);
 
     const tileService = TileService.getInstance();
-
+    
+    useEffect(() => {
+        if (triggerReset) {
+            clearSelected();
+            setSelectedOperator(null);
+            setTiles(...tileService.reset());
+        }
+    }, [triggerReset]);
+    
     useEffect(() => {
         if (selectedTile != null) {
             setHighlightedTiles(tileService.findAllAssociated(selectedTile));
@@ -60,7 +69,7 @@ const TileParent: React.FC<TileParentProps> = ({ selectedTile, validCommit, setS
             }
         }
         else {
-            setSelectedTile(idx);
+            setSelectedTile(idx === selectedTile ? null : idx);
         }
     };
 
@@ -83,7 +92,7 @@ const TileParent: React.FC<TileParentProps> = ({ selectedTile, validCommit, setS
     }
 
     return (
-        <div className='flex flex-col flex-1 pb-1'>
+        <div className='flex flex-col flex-1 pb-1 max-h-full'>
             <TileBoard tiles={basicTiles} selectedTile={selectedTile} highlightedTiles={highlightedTiles} onTileClick={clickTile}></TileBoard>
             <button onClick={() => addBasicTiles()} className='border-solid border-2 rounded-md'>Add</button>
             <button onClick={() => clearTile()} className='border-solid border-2 rounded-md'>Clear</button>

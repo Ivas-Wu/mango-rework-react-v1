@@ -7,13 +7,20 @@ interface BoardProps {
     selectedBoardTile: number | null;
     tileToPair: number | null;
     tileToClear: number | null;
+    triggerReset: boolean;
     setSelectedBoardTile: (idx: number | null) => void;
-    refreshBoardState:() => void;
+    refreshBoardState: () => void;
 }
 
-const Board: React.FC<BoardProps> = ({ selectedBoardTile, tileToPair, tileToClear, setSelectedBoardTile, refreshBoardState }) => {
+const Board: React.FC<BoardProps> = ({ selectedBoardTile, tileToPair, tileToClear, triggerReset, setSelectedBoardTile, refreshBoardState }) => {
     const boardService = BoardService.getInstance();
     const [board, setBoard] = useState<BoardTileProperties[]>(boardService.getBoardData());
+
+    useEffect(() => {
+        if (triggerReset) {
+            getBoardData();
+        }
+    }, [triggerReset]);
 
     useEffect(() => {
         if (selectedBoardTile == null || tileToPair == null) return
@@ -28,9 +35,13 @@ const Board: React.FC<BoardProps> = ({ selectedBoardTile, tileToPair, tileToClea
         refreshBoardState();
     }, [tileToClear]);
 
+    const getBoardData = () => {
+        setBoard(boardService.getBoardData());
+    };
+
     const onBoardTileClick = (idx: number, tileIdx: number | null) => {
         setSelectedBoardTile(idx);
-    }
+    };
 
     const getBoardSizeStyle = () => `grid-cols-${boardService.getBoardSize()}`;
 

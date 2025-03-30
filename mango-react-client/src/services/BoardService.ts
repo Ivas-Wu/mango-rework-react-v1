@@ -1,3 +1,4 @@
+import EventEmitter from "events";
 import { BoardTileProperties, BoardTileState } from "../components/Board/BoardTileModels";
 import { NumberService } from "./NumberService";
 
@@ -7,14 +8,25 @@ export class BoardService {
     private numberService: NumberService;
 
     private static instance: BoardService;
-
+    private eventHandler!: EventEmitter;
+    
     private columnCounter!: number[];
     private rowCounter!: number[];
     private diagonalCounter!: number[];
 
     private constructor(size: number) {
         this.numberService = new NumberService(size);
+        this.eventHandler = new EventEmitter();
         this.setBoardSize(size);
+    }
+
+    private setBoardSize(size: number) {
+        this.boardSize = size;
+        this.numberService.setBoardSize(size);
+        this.columnCounter = new Array(size).fill(0);
+        this.rowCounter = new Array(size).fill(0);
+        this.diagonalCounter = new Array(2).fill(0);
+        this.createBoard();
     }
 
     private createBoard() {
@@ -37,22 +49,28 @@ export class BoardService {
         this.rowCounter[row] += increment;
         this.columnCounter[col] += increment;
         if (this.rowCounter[row] === this.boardSize || this.columnCounter[col] === this.boardSize) {
-            // verify win
+            this.verifyBingo();
         }
 
         if (row === col) {
             this.diagonalCounter[0] += increment;
             if (this.diagonalCounter[0] === this.boardSize) {
-                // verify win
+                this.verifyBingo();
             }
         }
 
         if (row + col === this.boardSize - 1) {
             this.diagonalCounter[1] += increment;
             if (this.diagonalCounter[1] === this.boardSize) {
-                // verify win
+                this.verifyBingo();
             }
         }
+    }
+
+    private verifyBingo(): void {
+        this.eventHandler.emit('GameWon', () => {
+            return 'WON'; // placeholder
+        });
     }
 
     public static getInstance(): BoardService {
@@ -62,13 +80,13 @@ export class BoardService {
         return BoardService.instance;
     }
 
-    public setBoardSize(size: number) {
-        this.boardSize = size;
-        this.numberService.setBoardSize(size);
-        this.columnCounter = new Array(size).fill(0);
-        this.rowCounter = new Array(size).fill(0);
-        this.diagonalCounter = new Array(2).fill(0);
-        this.createBoard();
+    public getEventHandlerInstance(): EventEmitter {
+        return this.eventHandler;
+    }
+
+    public resetBoard(): BoardTileProperties[] {
+        this.setBoardSize(this.boardSize);
+        return this.getBoardData()
     }
 
     public getBoardSize(): number {
@@ -95,7 +113,7 @@ export class BoardService {
         );
 
         this.updateBoardCounters(idx);
-        return this.boardTiles;
+        return this.getBoardData();
     }
 
     public clearBoardTile(idx: number): BoardTileProperties[] {
@@ -104,6 +122,6 @@ export class BoardService {
         );
 
         this.updateBoardCounters(idx, -1);
-        return this.boardTiles;
+        return this.getBoardData();
     }
 }

@@ -64,6 +64,12 @@ export class TileService {
         return TileService.instance;
     }
 
+    public reset(): [TileProperties[], TileProperties[]] {
+        this.basicTiles = [];
+        this.advancedTiles = [];
+        return [this.basicTiles, this.advancedTiles];
+    }
+
     public getTileFromIdx(idx: number): TileProperties {
         const tile = this.basicTiles.find(tile => tile.idx === idx) || this.advancedTiles.find(tile => tile.idx === idx);
         if(!tile) {
