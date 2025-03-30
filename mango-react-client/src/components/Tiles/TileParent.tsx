@@ -13,9 +13,10 @@ interface TileParentProps {
     validCommit: boolean;
     setSelectedTile: (idx: number | null) => void;
     linkTile: () => void;
+    clearParentTile: (idx: number) => void;
 }
 
-const TileParent: React.FC<TileParentProps> = ({ selectedTile, validCommit, setSelectedTile, linkTile }) => {
+const TileParent: React.FC<TileParentProps> = ({ selectedTile, validCommit, setSelectedTile, linkTile, clearParentTile }) => {
     const [basicTiles, setBasicTiles] = useState<TileProperties[]>([]);
     const [advancedTiles, setAdvancedTiles] = useState<TileProperties[]>([]);
 
@@ -45,11 +46,12 @@ const TileParent: React.FC<TileParentProps> = ({ selectedTile, validCommit, setS
     const clearTile = () => { // Can only clear an advanced tile or a basic tile linked with children
         if (!selectedTile) return
         setTiles(...tileService.clearTile(selectedTile!));
+        clearParentTile(selectedTile!);
         clearSelected();
     };
 
     const clickTile = (idx: number) => {
-        if (selectedOperator && selectedTile) { // Triggers when selecting second element always
+        if (selectedOperator && selectedTile && selectedTile !== idx) { // Triggers when selecting second element always
             try {
                 setTiles(...tileService.basicOperation(selectedTile, idx, selectedOperator!), true);
             }
@@ -81,8 +83,12 @@ const TileParent: React.FC<TileParentProps> = ({ selectedTile, validCommit, setS
     }
 
     return (
-        <div className='flex flex-col max-h-screen p-4'>
+        <div className='flex flex-col flex-1 pb-1'>
             <TileBoard tiles={basicTiles} selectedTile={selectedTile} highlightedTiles={highlightedTiles} onTileClick={clickTile}></TileBoard>
+            <button onClick={() => addBasicTiles()} className='border-solid border-2 rounded-md'>Add</button>
+            <button onClick={() => clearTile()} className='border-solid border-2 rounded-md'>Clear</button>
+            <button disabled={!validCommit} onClick={() => commitTile()} className='border-solid border-2 rounded-md'>Commit</button>
+            <TileBoard tiles={advancedTiles} selectedTile={selectedTile} highlightedTiles={highlightedTiles} onTileClick={clickTile}></TileBoard>
             <div className='flex flex-row'>
                 {Object.keys(Operator).map((op) => {
                     const operator = Operator[op as keyof typeof Operator];
@@ -91,10 +97,6 @@ const TileParent: React.FC<TileParentProps> = ({ selectedTile, validCommit, setS
                     );
                 })}
             </div>
-            <button onClick={() => addBasicTiles()} className='border-solid border-2 rounded-md'>Add</button>
-            <button onClick={() => clearTile()} className='border-solid border-2 rounded-md'>Clear</button>
-            <button disabled={!validCommit} onClick={() => commitTile()} className='border-solid border-2 rounded-md'>Commit</button>
-            <TileBoard tiles={advancedTiles} selectedTile={selectedTile} highlightedTiles={highlightedTiles} onTileClick={clickTile}></TileBoard>
         </div>
     )
 }

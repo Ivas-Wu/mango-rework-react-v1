@@ -6,7 +6,11 @@ import { TileService } from '../services/TilesService';
 import { TileProperties, TileState } from './Tiles/TileModels';
 import { BoardTileProperties, BoardTileState } from './Board/BoardTileModels';
 
-const GameParent: React.FC = () => {
+interface GameParentProps {
+    height: number;
+}
+
+const GameParent: React.FC<GameParentProps> = ({height}) => {
     const [selectedTile, setSelectedTile] = useState<number | null>(null); // Based on tile idx
     const [selectedBoardTile, setSelectedBoardTile] = useState<number | null>(null); // Based on board idx
 
@@ -15,6 +19,7 @@ const GameParent: React.FC = () => {
 
     const [validPair, setValidPair] = useState<boolean>(false);
     const [tileToPair, setTileToPair] = useState<number | null>(null);
+    const [tileToClear, setTileToClear] = useState<number | null>(null);
 
     const boardService = BoardService.getInstance();
     const tileService = TileService.getInstance();
@@ -65,10 +70,16 @@ const GameParent: React.FC = () => {
         updateFullTile();
     };
 
+    const clearParentTile = (idx: number) => {
+        setTileToClear(boardService.getBoardTileByTileIdx(idx)?.idx ?? null);
+    };
+
     return (
-        <div className="grid grid-cols-2 max-h-lvh">
-            <TileParent selectedTile={selectedTile} validCommit={validPair} setSelectedTile={setSelectedTile} linkTile={linkSelectedTiles}></TileParent>
-            <Board selectedBoardTile={selectedBoardTile} tileToPair={tileToPair} setSelectedBoardTile={setSelectedBoardTile} refreshBoardState={() => updateFullBoardTile()}></Board>
+        <div className={`grid grid-cols-2 h-[93vh] flex-1 overflow-auto`}>
+            <div className='flex flex-col h-full p-4'>
+                <TileParent selectedTile={selectedTile} validCommit={validPair} setSelectedTile={setSelectedTile} linkTile={linkSelectedTiles} clearParentTile={clearParentTile}></TileParent>
+            </div>
+            <Board selectedBoardTile={selectedBoardTile} tileToPair={tileToPair} tileToClear={tileToClear} setSelectedBoardTile={setSelectedBoardTile} refreshBoardState={() => updateFullBoardTile()}></Board>
         </div>
     );
 }

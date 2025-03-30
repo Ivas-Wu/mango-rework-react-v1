@@ -109,6 +109,9 @@ export class TileService {
         if (tile1.state !== TileState.UNUSED || tile2.state !== TileState.UNUSED) {
             throw new Error(`Tile cannot be used.`);
         }
+        if (tile1 === tile2) {
+            throw new Error(`Same tile.`);
+        }
     
         let result: number;
         switch (operator) {

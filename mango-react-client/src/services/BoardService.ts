@@ -8,6 +8,10 @@ export class BoardService {
 
     private static instance: BoardService;
 
+    private columnCounter!: number[];
+    private rowCounter!: number[];
+    private diagonalCounter!: number[];
+
     private constructor(size: number) {
         this.numberService = new NumberService(size);
         this.setBoardSize(size);
@@ -15,7 +19,7 @@ export class BoardService {
 
     private createBoard() {
         let boardTiles: BoardTileProperties[] = [];
-        for( let i = 0; i < this.boardSize * this.boardSize; i++ ) {
+        for (let i = 0; i < this.boardSize * this.boardSize; i++) {
             boardTiles.push({
                 idx: i,
                 value: this.numberService.generateBoardNumber(),
@@ -24,6 +28,31 @@ export class BoardService {
             })
         }
         this.boardTiles = boardTiles;
+    }
+
+    private updateBoardCounters(idx: number, increment: number = 1): void {
+        const row = Math.floor(idx / this.boardSize);
+        const col = idx % this.boardSize;
+
+        this.rowCounter[row] += increment;
+        this.columnCounter[col] += increment;
+        if (this.rowCounter[row] === this.boardSize || this.columnCounter[col] === this.boardSize) {
+            // verify win
+        }
+
+        if (row === col) {
+            this.diagonalCounter[0] += increment;
+            if (this.diagonalCounter[0] === this.boardSize) {
+                // verify win
+            }
+        }
+
+        if (row + col === this.boardSize - 1) {
+            this.diagonalCounter[1] += increment;
+            if (this.diagonalCounter[1] === this.boardSize) {
+                // verify win
+            }
+        }
     }
 
     public static getInstance(): BoardService {
@@ -36,6 +65,9 @@ export class BoardService {
     public setBoardSize(size: number) {
         this.boardSize = size;
         this.numberService.setBoardSize(size);
+        this.columnCounter = new Array(size).fill(0);
+        this.rowCounter = new Array(size).fill(0);
+        this.diagonalCounter = new Array(2).fill(0);
         this.createBoard();
     }
 
@@ -59,8 +91,19 @@ export class BoardService {
 
     public setBoardTileComplete(idx: number, tileIdx: number): BoardTileProperties[] {
         this.boardTiles = this.boardTiles.map(tile =>
-            tile.idx === idx ? {...tile, tileIdx: tileIdx, state: BoardTileState.COMPLETE} : tile
+            tile.idx === idx ? { ...tile, tileIdx: tileIdx, state: BoardTileState.COMPLETE } : tile
         );
+
+        this.updateBoardCounters(idx);
+        return this.boardTiles;
+    }
+
+    public clearBoardTile(idx: number): BoardTileProperties[] {
+        this.boardTiles = this.boardTiles.map(tile =>
+            tile.idx === idx ? { ...tile, tileIdx: null, state: BoardTileState.NOT_COMPLETE } : tile
+        );
+
+        this.updateBoardCounters(idx, -1);
         return this.boardTiles;
     }
 }

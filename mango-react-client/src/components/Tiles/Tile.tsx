@@ -37,7 +37,7 @@ const Tile: React.FC<TileProps> = ({ idx, value, selected, highlighted, state, p
     };
 
     return (
-        <div onClick={()=> onTileClick(idx) }className={`h-24 border-solid border-4 rounded-md p-2 aspect-square flex items-center justify-center text-center ${getTileStyle()} hover:bg-white`}>
+        <div onClick={()=> onTileClick(idx) }className={`h-20 border-solid border-4 rounded-md p-2 aspect-square flex items-center justify-center text-center ${getTileStyle()} hover:bg-white`}>
             {value}
         </div>
     )
