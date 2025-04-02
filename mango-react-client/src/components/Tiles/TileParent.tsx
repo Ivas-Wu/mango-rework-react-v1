@@ -3,6 +3,7 @@ import TileBoard from './TileBoard'
 import { Operator, TileProperties, TileState } from './TileModels';
 import { TileService } from '../../services/TilesService';
 import Operators from './Operators';
+import { ConfigService } from '../../services/ConfigService';
 
 // const sampleData: TileProperties[] = [
 //     { idx: 1, value: 1, highlighted: false, state: TileState.UNUSED, parents: [], children: [] },
@@ -25,7 +26,35 @@ const TileParent: React.FC<TileParentProps> = ({ selectedTile, validCommit, trig
     const [selectedOperator, setSelectedOperator] = useState<Operator | null>(null);
 
     const tileService = TileService.getInstance();
-    
+    const configService = ConfigService.getInstance();
+
+    useEffect(() => {
+        const handleKeyPress = (event: KeyboardEvent) => {
+            switch (event.key) {
+                case configService.getOperation(0):
+                    clickOperator(Operator.ADD);
+                    return
+                case configService.getOperation(1):
+                    clickOperator(Operator.SUBTRACT);
+                    return
+                case configService.getOperation(2):
+                    clickOperator(Operator.MULTIPLY);
+                    return
+                case configService.getOperation(3):
+                    clickOperator(Operator.DIVIDE);
+                    return
+                default:
+                    return
+            }
+        };
+
+        document.addEventListener("keydown", handleKeyPress);
+
+        return () => {
+            document.removeEventListener("keydown", handleKeyPress);
+        };
+    }, []);
+
     useEffect(() => {
         if (triggerReset) {
             clearSelected();
@@ -33,7 +62,7 @@ const TileParent: React.FC<TileParentProps> = ({ selectedTile, validCommit, trig
             setTiles(...tileService.reset());
         }
     }, [triggerReset]);
-    
+
     useEffect(() => {
         if (selectedTile != null) {
             setHighlightedTiles(tileService.findAllAssociated(selectedTile));
@@ -45,7 +74,7 @@ const TileParent: React.FC<TileParentProps> = ({ selectedTile, validCommit, trig
             setHighlightedTiles([]);
         }
     }, [selectedTile]);
-    
+
     const addBasicTiles = () => setTiles(...tileService.addTiles());
     const clearSelected = () => {
         setSelectedTile(null);
