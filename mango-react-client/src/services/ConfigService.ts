@@ -7,13 +7,13 @@ export class ConfigService {
     private operationHotkeys!: String[];
 
     private constructor() {
-        this.setBoardSize(Number(localStorage.getItem('boardSize')) ?? 3);
-        this.setBoardSize(Number(localStorage.getItem('timerCount')) ?? 15);
+        this.setBoardSize(Number(localStorage.getItem('boardSize')) || 3);
+        this.setTimerCount(Number(localStorage.getItem('timerCount')) || 15);
         this.operationHotkeys = new Array(4).fill(0);
-        this.setOperation1(localStorage.getItem('operation1') ?? 'q');
-        this.setOperation2(localStorage.getItem('operation2') ?? 'w');
-        this.setOperation3(localStorage.getItem('operation3') ?? 'e');
-        this.setOperation4(localStorage.getItem('operation4') ?? 'r');
+        this.setOperation1(localStorage.getItem('operation1') || 'q');
+        this.setOperation2(localStorage.getItem('operation2') || 'w');
+        this.setOperation3(localStorage.getItem('operation3') || 'e');
+        this.setOperation4(localStorage.getItem('operation4') || 'r');
     };
 
     public static getInstance() {
@@ -23,12 +23,26 @@ export class ConfigService {
         return ConfigService.instance;
     }
 
+    public getBoardSize(): number {
+        return this.boardSize;
+    }
+
+    public getTimerCount(): number {
+        return this.timerCount;
+    }
+
+    public getOperation(idx: number): String {
+        return this.operationHotkeys[idx];
+    }
+
     public setBoardSize(boardSize: number) {
+        if (boardSize <= 1 || boardSize > 8) return
         localStorage.setItem('boardSize', String(boardSize));
         this.boardSize = boardSize;
     }
 
     public setTimerCount(time: number) {
+        if (time <= 3 || time > 60) return
         localStorage.setItem('timerCount', String(time));
         this.timerCount = time;
     }
@@ -51,9 +65,5 @@ export class ConfigService {
     public setOperation4(key: String) {
         localStorage.setItem('oepration4', String(key));
         this.operationHotkeys[3] = key;
-    }
-
-    public getOperation(idx: number) {
-        return this.operationHotkeys[idx];
     }
 }

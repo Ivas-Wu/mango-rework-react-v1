@@ -109,6 +109,7 @@ const GameParent: React.FC<GameParentProps> = ({ height }) => {
                 />
             </div>
             <Board
+                width={height}
                 selectedBoardTile={selectedBoardTile}
                 tileToPair={tileToPair}
                 tileToClear={tileToClear}

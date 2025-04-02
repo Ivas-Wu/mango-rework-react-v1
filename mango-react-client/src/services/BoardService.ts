@@ -1,11 +1,14 @@
 import EventEmitter from "events";
 import { BoardTileProperties, BoardTileState } from "../components/Board/BoardTileModels";
 import { NumberService } from "./NumberService";
+import { ConfigService } from "./ConfigService";
 
 export class BoardService {
     private boardSize!: number;
     private boardTiles: BoardTileProperties[] = [];
+
     private numberService: NumberService;
+    private configService: ConfigService;
 
     private static instance: BoardService;
     private eventHandler!: EventEmitter;
@@ -14,7 +17,9 @@ export class BoardService {
     private rowCounter!: number[];
     private diagonalCounter!: number[];
 
-    private constructor(size: number) {
+    private constructor() {
+        this.configService = ConfigService.getInstance();
+        const size = this.configService.getBoardSize();
         this.numberService = new NumberService(size);
         this.eventHandler = new EventEmitter();
         this.setBoardSize(size);
@@ -75,7 +80,7 @@ export class BoardService {
 
     public static getInstance(): BoardService {
         if (!BoardService.instance) {
-            BoardService.instance = new BoardService(4);
+            BoardService.instance = new BoardService();
         }
         return BoardService.instance;
     }

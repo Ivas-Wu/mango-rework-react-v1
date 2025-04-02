@@ -4,6 +4,7 @@ import { BoardTileProperties } from './BoardTileModels';
 import BoardTile from './BoardTile';
 
 interface BoardProps {
+    width: number;
     selectedBoardTile: number | null;
     tileToPair: number | null;
     tileToClear: number | null;
@@ -12,7 +13,7 @@ interface BoardProps {
     refreshBoardState: () => void;
 }
 
-const Board: React.FC<BoardProps> = ({ selectedBoardTile, tileToPair, tileToClear, triggerReset, setSelectedBoardTile, refreshBoardState }) => {
+const Board: React.FC<BoardProps> = ({ width, selectedBoardTile, tileToPair, tileToClear, triggerReset, setSelectedBoardTile, refreshBoardState }) => {
     const boardService = BoardService.getInstance();
     const [board, setBoard] = useState<BoardTileProperties[]>(boardService.getBoardData());
 
@@ -46,7 +47,7 @@ const Board: React.FC<BoardProps> = ({ selectedBoardTile, tileToPair, tileToClea
     const getBoardSizeStyle = () => `grid-cols-${boardService.getBoardSize()}`;
 
     return (
-        <div className={`grid gap-1 p-4 max-w-[93lvh] ${getBoardSizeStyle()}`}>
+        <div className={`grid gap-1 p-4 max-w-[${width}lvh] ${getBoardSizeStyle()}`}>
             {board.map((b) => {
                 return <BoardTile {...b} selected={selectedBoardTile === b.idx} onBoardTileClick={onBoardTileClick}></BoardTile>
             })}
