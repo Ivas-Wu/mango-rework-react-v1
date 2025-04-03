@@ -18,6 +18,12 @@ const Board: React.FC<BoardProps> = ({ width, selectedBoardTile, tileToPair, til
     const [board, setBoard] = useState<BoardTileProperties[]>(boardService.getBoardData());
 
     useEffect(() => {
+        boardService.getEventHandlerInstance().on('boardUpdated', () => {
+            getBoardData();
+        });
+    }, []);
+
+    useEffect(() => {
         if (triggerReset) {
             getBoardData();
         }
@@ -47,7 +53,7 @@ const Board: React.FC<BoardProps> = ({ width, selectedBoardTile, tileToPair, til
     const getBoardSizeStyle = () => `grid-cols-${boardService.getBoardSize()}`;
 
     return (
-        <div className={`grid gap-1 p-4 max-w-[${width}lvh] ${getBoardSizeStyle()}`}>
+        <div className={`grid gap-1 p-4 max-w-[${width}lvh]`} style={{ gridTemplateColumns: `repeat(${boardService.getBoardSize()}, minmax(0, 1fr))` }}>
             {board.map((b) => {
                 return <BoardTile {...b} selected={selectedBoardTile === b.idx} onBoardTileClick={onBoardTileClick}></BoardTile>
             })}

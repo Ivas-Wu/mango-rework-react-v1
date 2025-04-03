@@ -23,6 +23,9 @@ export class BoardService {
         this.numberService = new NumberService(size);
         this.eventHandler = new EventEmitter();
         this.setBoardSize(size);
+        this.configService.getEventHandlerInstance().on('boardSizeUpdated', (boardSize: number) => {
+            this.setBoardSize(boardSize);
+        });
     }
 
     private setBoardSize(size: number) {
@@ -32,6 +35,7 @@ export class BoardService {
         this.rowCounter = new Array(size).fill(0);
         this.diagonalCounter = new Array(2).fill(0);
         this.createBoard();
+        this.eventHandler.emit('boardUpdated');
     }
 
     private createBoard() {
