@@ -1,9 +1,13 @@
 import EventEmitter from "events";
+import { configDefaults } from "../constants/defaults";
 
 export class ConfigService {
     private boardSize!: number;
-    private timerCount!: number;
-
+    private tilesToGen!: number;
+    
+    private timerMode!: boolean;
+    private timerInterval!: number;
+    
     private static instance: ConfigService;
 
     private operationHotkeys!: String[];
@@ -11,8 +15,12 @@ export class ConfigService {
 
     private constructor() {
         this.eventHandler = new EventEmitter();
-        this.setBoardSize(Number(localStorage.getItem('boardSize')) || 3);
-        this.setTimerCount(Number(localStorage.getItem('timerCount')) || 15);
+
+        this.setBoardSize(Number(localStorage.getItem('boardSize')) || configDefaults.BOARD_SIZE);
+        this.setTilesToGen(Number(localStorage.getItem('tilesToGen')) || configDefaults.TILES_TO_GEN);
+        this.setTimerMode(Boolean(localStorage.getItem('timerMode')) || configDefaults.TIMER_MODE);
+        this.setTimerInterval(Number(localStorage.getItem('timerInterval')) || configDefaults.INTERVAL);
+
         this.operationHotkeys = new Array(4).fill(0);
         this.setOperation1(localStorage.getItem('operation1') || 'q');
         this.setOperation2(localStorage.getItem('operation2') || 'w');
@@ -31,8 +39,16 @@ export class ConfigService {
         return this.boardSize;
     }
 
-    public getTimerCount(): number {
-        return this.timerCount;
+    public getTilesToGen(): number {
+        return this.tilesToGen;
+    }
+
+    public getTimerMode(): boolean {
+        return this.timerMode;
+    }
+
+    public getTimerInterval(): number {
+        return this.timerInterval;
     }
 
     public getOperation(idx: number): String {
@@ -40,16 +56,27 @@ export class ConfigService {
     }
 
     public setBoardSize(boardSize: number) {
-        if (boardSize <= 1 || boardSize > 8) return
+        if (boardSize <= 1 || boardSize > 8) boardSize = configDefaults.BOARD_SIZE
         localStorage.setItem('boardSize', String(boardSize));
         this.boardSize = boardSize;
         this.eventHandler.emit('boardSizeUpdated', this.boardSize);
     }
 
-    public setTimerCount(time: number) {
-        if (time <= 3 || time > 60) return
-        localStorage.setItem('timerCount', String(time));
-        this.timerCount = time;
+    public setTilesToGen(count: number) {
+        if (count < 1 || count > 8) count = configDefaults.TILES_TO_GEN
+        localStorage.setItem('tilesToGen', String(count));
+        this.tilesToGen = count;
+    }
+
+    public setTimerMode(set: boolean) {
+        localStorage.setItem('timerMode', String(set));
+        this.timerMode = set;
+    }
+
+    public setTimerInterval(time: number) {
+        if (time <= 3 || time > 60) time = configDefaults.INTERVAL
+        localStorage.setItem('timerInterval', String(time));
+        this.timerInterval = time;
     }
 
     public setOperation1(key: String) {

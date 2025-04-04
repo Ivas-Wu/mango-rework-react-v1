@@ -21,6 +21,7 @@ export class BoardService {
         this.configService = ConfigService.getInstance();
         const size = this.configService.getBoardSize();
         this.numberService = new NumberService(size);
+
         this.eventHandler = new EventEmitter();
         this.setBoardSize(size);
         this.configService.getEventHandlerInstance().on('boardSizeUpdated', (boardSize: number) => {
@@ -35,7 +36,7 @@ export class BoardService {
         this.rowCounter = new Array(size).fill(0);
         this.diagonalCounter = new Array(2).fill(0);
         this.createBoard();
-        this.eventHandler.emit('boardUpdated');
+        this.broadCastBoardUpdated();
     }
 
     private createBoard() {
@@ -49,6 +50,10 @@ export class BoardService {
             })
         }
         this.boardTiles = boardTiles;
+    }
+
+    private broadCastBoardUpdated() {
+        this.eventHandler.emit('boardUpdated');
     }
 
     private updateBoardCounters(idx: number, increment: number = 1): void {
@@ -93,9 +98,9 @@ export class BoardService {
         return this.eventHandler;
     }
 
-    public resetBoard(): BoardTileProperties[] {
+    public resetBoard(): void {
         this.setBoardSize(this.boardSize);
-        return this.getBoardData()
+        this.broadCastBoardUpdated();
     }
 
     public getBoardSize(): number {
@@ -116,21 +121,21 @@ export class BoardService {
         return tile ? tile : null;
     }
 
-    public setBoardTileComplete(idx: number, tileIdx: number): BoardTileProperties[] {
+    public setBoardTileComplete(idx: number, tileIdx: number): void {
         this.boardTiles = this.boardTiles.map(tile =>
             tile.idx === idx ? { ...tile, tileIdx: tileIdx, state: BoardTileState.COMPLETE } : tile
         );
 
         this.updateBoardCounters(idx);
-        return this.getBoardData();
+        this.broadCastBoardUpdated();
     }
 
-    public clearBoardTile(idx: number): BoardTileProperties[] {
+    public clearBoardTile(idx: number): void {
         this.boardTiles = this.boardTiles.map(tile =>
             tile.idx === idx ? { ...tile, tileIdx: null, state: BoardTileState.NOT_COMPLETE } : tile
         );
 
         this.updateBoardCounters(idx, -1);
-        return this.getBoardData();
+        this.broadCastBoardUpdated();
     }
 }

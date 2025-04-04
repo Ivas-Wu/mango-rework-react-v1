@@ -31,13 +31,13 @@ const Board: React.FC<BoardProps> = ({ width, selectedBoardTile, tileToPair, til
 
     useEffect(() => {
         if (selectedBoardTile == null || tileToPair == null) return
-        setBoard(boardService.setBoardTileComplete(selectedBoardTile, tileToPair));
+        boardService.setBoardTileComplete(selectedBoardTile, tileToPair);
         refreshBoardState();
     }, [tileToPair]);
 
     useEffect(() => {
         if (tileToClear == null) return
-        setBoard(boardService.clearBoardTile(tileToClear));
+        boardService.clearBoardTile(tileToClear);
         setSelectedBoardTile(null);
         refreshBoardState();
     }, [tileToClear]);

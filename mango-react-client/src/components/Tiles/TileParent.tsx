@@ -50,6 +50,10 @@ const TileParent: React.FC<TileParentProps> = ({ selectedTile, validCommit, trig
 
         document.addEventListener("keydown", handleKeyPress);
 
+        tileService.getEventHandlerInstance().on('tilesUpdated', () => {
+            setTiles(...tileService.getTiles());
+        });
+
         return () => {
             document.removeEventListener("keydown", handleKeyPress);
         };
@@ -60,6 +64,7 @@ const TileParent: React.FC<TileParentProps> = ({ selectedTile, validCommit, trig
             clearSelected();
             setSelectedOperator(null);
             setTiles(...tileService.reset());
+            tileService.stopTimer();
         }
     }, [triggerReset]);
 
@@ -75,7 +80,7 @@ const TileParent: React.FC<TileParentProps> = ({ selectedTile, validCommit, trig
         }
     }, [selectedTile]);
 
-    const addBasicTiles = () => setTiles(...tileService.addTiles());
+    const addBasicTiles = () => tileService.addTiles();
     const clearSelected = () => {
         setSelectedTile(null);
         setHighlightedTiles([]);
@@ -83,7 +88,7 @@ const TileParent: React.FC<TileParentProps> = ({ selectedTile, validCommit, trig
 
     const clearTile = () => { // Can only clear an advanced tile or a basic tile linked with children
         if (!selectedTile) return
-        setTiles(...tileService.clearTile(selectedTile!));
+        tileService.clearTile(selectedTile!);
         clearParentTile(selectedTile!);
         clearSelected();
     };
@@ -91,7 +96,7 @@ const TileParent: React.FC<TileParentProps> = ({ selectedTile, validCommit, trig
     const clickTile = (idx: number) => {
         if (selectedOperator && selectedTile && selectedTile !== idx) { // Triggers when selecting second element always
             try {
-                setTiles(...tileService.basicOperation(selectedTile, idx, selectedOperator!), true);
+                tileService.basicOperation(selectedTile, idx, selectedOperator!);
             }
             catch {
                 clearSelected();
@@ -105,7 +110,7 @@ const TileParent: React.FC<TileParentProps> = ({ selectedTile, validCommit, trig
     const setTiles = (newBt: TileProperties[], newAt: TileProperties[], setSelect = false) => {
         setBasicTiles(newBt);
         setAdvancedTiles(newAt);
-        if (setSelect) setSelectedTile(newAt[newAt.length - 1].idx)
+        // if (setSelect) setSelectedTile(newAt[newAt.length - 1].idx)
     };
 
     const clickOperator = (operator: Operator) => {
@@ -115,7 +120,7 @@ const TileParent: React.FC<TileParentProps> = ({ selectedTile, validCommit, trig
 
     const commitTile = () => {
         if (!selectedTile) return;
-        setTiles(...tileService.setTileUsed(selectedTile));
+        tileService.setTileUsed(selectedTile);
         setSelectedOperator(null);
         linkTile();
     }
@@ -124,6 +129,7 @@ const TileParent: React.FC<TileParentProps> = ({ selectedTile, validCommit, trig
         <div className='flex flex-col flex-1 pb-1 max-h-full'>
             <TileBoard tiles={basicTiles} selectedTile={selectedTile} highlightedTiles={highlightedTiles} onTileClick={clickTile}></TileBoard>
             <button onClick={() => addBasicTiles()} className='border-solid border-2 rounded-md'>Add</button>
+            <button onClick={() => tileService.startTimer()} className='border-solid border-2 rounded-md'>Start Timer</button>
             <button onClick={() => clearTile()} className='border-solid border-2 rounded-md'>Clear</button>
             <button disabled={!validCommit} onClick={() => commitTile()} className='border-solid border-2 rounded-md'>Commit</button>
             <TileBoard tiles={advancedTiles} selectedTile={selectedTile} highlightedTiles={highlightedTiles} onTileClick={clickTile}></TileBoard>

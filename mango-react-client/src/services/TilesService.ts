@@ -1,25 +1,35 @@
+import EventEmitter from 'events';
 import { Operator, TileProperties, TileState } from '../components/Tiles/TileModels';
+import { ConfigService } from './ConfigService';
 import { NumberService } from './NumberService';
+import { TimerService } from './TimerService';
 
 export class TileService {
-    private tilesToGen: number;
     private tileIdx: number;
+
+    private configService: ConfigService;
     private numberService: NumberService;
+    private timerService: TimerService;
 
     private basicTiles: TileProperties[] = [];
     private advancedTiles: TileProperties[] = [];
+    private eventHandler!: EventEmitter;
 
     private static instance: TileService;
 
     private constructor() {
-        this.tilesToGen = 3;
         this.tileIdx = 0;
-        this.numberService = new NumberService(4);
+
+        this.configService = ConfigService.getInstance();
+        const size = this.configService.getBoardSize();
+        this.numberService = new NumberService(size);
+        this.timerService = new TimerService();
+        this.eventHandler = new EventEmitter();
     }
 
     private generateBasicTiles() {
         const newBasicTiles = [...this.basicTiles];
-        for (let i = 0; i < this.tilesToGen; i++) {
+        for (let i = 0; i < this.configService.getTilesToGen(); i++) {
             newBasicTiles.push({
                 idx: this.tileIdx,
                 value: this.numberService.generateCardNumber(),
@@ -34,7 +44,7 @@ export class TileService {
 
     private generateAdvancedTile(value: number, parents: number[]): TileProperties {
         const newAdvancedTiles = [...this.advancedTiles];
-        const newTile: TileProperties = 
+        const newTile: TileProperties =
         {
             idx: this.tileIdx,
             value: value,
@@ -46,6 +56,10 @@ export class TileService {
         this.tileIdx++;
         this.advancedTiles = newAdvancedTiles;
         return newTile;
+    }
+
+    private broadCastTilesUpdated() {
+        this.eventHandler.emit('tilesUpdated');
     }
 
     private findAllParents(idx: number): number[] {
@@ -64,40 +78,48 @@ export class TileService {
         return TileService.instance;
     }
 
+    public getEventHandlerInstance(): EventEmitter {
+        return this.eventHandler;
+    }
+
     public reset(): [TileProperties[], TileProperties[]] {
         this.basicTiles = [];
         this.advancedTiles = [];
+        return this.getTiles();
+    }
+
+    public getTiles(): [TileProperties[], TileProperties[]] {
         return [this.basicTiles, this.advancedTiles];
     }
 
     public getTileFromIdx(idx: number): TileProperties {
         const tile = this.basicTiles.find(tile => tile.idx === idx) || this.advancedTiles.find(tile => tile.idx === idx);
-        if(!tile) {
+        if (!tile) {
             throw new Error(`Tile not found with index ${idx}.`);
         }
         return tile;
     }
 
-    public addTiles(): [TileProperties[], TileProperties[]] {
+    public addTiles(): void {
         this.generateBasicTiles();
-        return [this.basicTiles, this.advancedTiles];
+        this.broadCastTilesUpdated();
     }
 
-    public clearTile(idx: number): [TileProperties[], TileProperties[]] {
+    public clearTile(idx: number): void {
         const associated = this.findAllAssociated(idx);
-        this.basicTiles = this.basicTiles.map((tile: TileProperties) => 
+        this.basicTiles = this.basicTiles.map((tile: TileProperties) =>
             associated.includes(tile.idx) ? { ...tile, state: TileState.UNUSED, child: null } : tile);
-        this.advancedTiles = this.advancedTiles.filter((tile: TileProperties) => 
+        this.advancedTiles = this.advancedTiles.filter((tile: TileProperties) =>
             !associated.includes(tile.idx));
-        return [this.basicTiles, this.advancedTiles];
+        this.broadCastTilesUpdated();
     }
 
     public findBaseChild(idx: number): TileProperties {
         let tile = this.getTileFromIdx(idx);
-        while(tile.child) {
+        while (tile.child) {
             tile = tile.child;
         }
-        return tile; 
+        return tile;
     }
 
     public findAllAssociated(idx: number): number[] {
@@ -105,10 +127,10 @@ export class TileService {
         return this.findAllParents(baseTile.idx);
     }
 
-    public basicOperation(idx1: number, idx2: number, operator: Operator): [TileProperties[], TileProperties[]] {
+    public basicOperation(idx1: number, idx2: number, operator: Operator): void {
         const tile1 = this.basicTiles.find(tile => tile.idx === idx1) || this.advancedTiles.find(tile => tile.idx === idx1);
         const tile2 = this.basicTiles.find(tile => tile.idx === idx2) || this.advancedTiles.find(tile => tile.idx === idx2);
-    
+
         if (!tile1 || !tile2) {
             throw new Error(`Tile not found.`);
         }
@@ -118,7 +140,7 @@ export class TileService {
         if (tile1 === tile2) {
             throw new Error(`Same tile.`);
         }
-    
+
         let result: number;
         switch (operator) {
             case Operator.ADD:
@@ -140,7 +162,7 @@ export class TileService {
             default:
                 throw new Error(`Invalid operator: ${operator}`);
         }
-        
+
         const newTile = this.generateAdvancedTile(result, [tile1.idx, tile2.idx]);
         this.basicTiles = this.basicTiles.map(tile =>
             tile.idx === idx1 || tile.idx === idx2 ? { ...tile, state: TileState.HELD, child: newTile } : tile
@@ -148,18 +170,29 @@ export class TileService {
         this.advancedTiles = this.advancedTiles.map(tile =>
             tile.idx === idx1 || tile.idx === idx2 ? { ...tile, state: TileState.HELD, child: newTile } : tile
         );
-    
-        return [this.basicTiles, this.advancedTiles];
+
+        this.broadCastTilesUpdated();
     }
 
-    public setTileUsed(idx: number): [TileProperties[], TileProperties[]] {
-        this.basicTiles = this.basicTiles.map(tile => 
-            tile.idx === idx ? {...tile, state: TileState.USED} : tile
+    public setTileUsed(idx: number): void {
+        this.basicTiles = this.basicTiles.map(tile =>
+            tile.idx === idx ? { ...tile, state: TileState.USED } : tile
         );
-        this.advancedTiles = this.advancedTiles.map(tile => 
-            tile.idx === idx ? {...tile, state: TileState.USED} : tile
+        this.advancedTiles = this.advancedTiles.map(tile =>
+            tile.idx === idx ? { ...tile, state: TileState.USED } : tile
         );
 
-        return [this.basicTiles, this.advancedTiles];
+        this.broadCastTilesUpdated();
+    }
+
+    public startTimer() {
+        if (!this.configService.getTimerMode()) return
+        this.timerService.setInterval(this.configService.getTimerInterval());
+        this.timerService.startTimer(() => this.addTiles());
+    }
+
+    public stopTimer() {
+        this.timerService.stopTimer();
+        // logging service to record records
     }
 }
