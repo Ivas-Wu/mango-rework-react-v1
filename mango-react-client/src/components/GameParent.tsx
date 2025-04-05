@@ -6,6 +6,8 @@ import { TileService } from '../services/TilesService';
 import { TileProperties, TileState } from './Tiles/TileModels';
 import { BoardTileProperties, BoardTileState } from './Board/BoardTileModels';
 import GameOverModal from './Utl/GameOverModal';
+import Timer from './Utl/Timer';
+import { BoardBroadcastConstants } from '../constants/EventConstants';
 
 interface GameParentProps {
     height: number;
@@ -28,7 +30,7 @@ const GameParent: React.FC<GameParentProps> = ({ height }) => {
     const tileService = TileService.getInstance();
 
     useEffect(() => {
-        boardService.getEventHandlerInstance().on('GameWon', (message) => {
+        boardService.on(BoardBroadcastConstants.GAME_WON, (message) => {
             console.log(message); // debugging
             setGameDone(true);
         });
@@ -107,6 +109,7 @@ const GameParent: React.FC<GameParentProps> = ({ height }) => {
                     linkTile={linkSelectedTiles}
                     clearParentTile={clearParentTile}
                 />
+                <Timer />
             </div>
             <Board
                 width={height}

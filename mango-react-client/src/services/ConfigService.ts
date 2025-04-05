@@ -1,13 +1,15 @@
 import EventEmitter from "events";
-import { configDefaults } from "../constants/defaults";
+import { ConfigDefaults } from "../constants/Defaults";
+import { ConfigBroadcastConstants } from "../constants/EventConstants";
+import { ConfigStorageConstants } from "../constants/StorageDefaults";
 
 export class ConfigService {
     private boardSize!: number;
     private tilesToGen!: number;
-    
+
     private timerMode!: boolean;
     private timerInterval!: number;
-    
+
     private static instance: ConfigService;
 
     private operationHotkeys!: String[];
@@ -16,17 +18,25 @@ export class ConfigService {
     private constructor() {
         this.eventHandler = new EventEmitter();
 
-        this.setBoardSize(Number(localStorage.getItem('boardSize')) || configDefaults.BOARD_SIZE);
-        this.setTilesToGen(Number(localStorage.getItem('tilesToGen')) || configDefaults.TILES_TO_GEN);
-        this.setTimerMode(Boolean(localStorage.getItem('timerMode')) || configDefaults.TIMER_MODE);
-        this.setTimerInterval(Number(localStorage.getItem('timerInterval')) || configDefaults.INTERVAL);
+        this.setBoardSize(Number(this.getStorageValue(ConfigStorageConstants.BOARD_SIZE)) || ConfigDefaults.BOARD_SIZE);
+        this.setTilesToGen(Number(this.getStorageValue(ConfigStorageConstants.TILES_TO_GEN)) || ConfigDefaults.TILES_TO_GEN);
+        this.setTimerMode(Boolean(this.getStorageValue(ConfigStorageConstants.TIMER_MODE)) || ConfigDefaults.TIMER_MODE);
+        this.setTimerInterval(Number(this.getStorageValue(ConfigStorageConstants.TIMER_INTERVAL)) || ConfigDefaults.INTERVAL);
 
         this.operationHotkeys = new Array(4).fill(0);
-        this.setOperation1(localStorage.getItem('operation1') || 'q');
-        this.setOperation2(localStorage.getItem('operation2') || 'w');
-        this.setOperation3(localStorage.getItem('operation3') || 'e');
-        this.setOperation4(localStorage.getItem('operation4') || 'r');
+        this.setOperation1(this.getStorageValue(ConfigStorageConstants.OPERATION1) || 'q');
+        this.setOperation2(this.getStorageValue(ConfigStorageConstants.OPERATION2) || 'w');
+        this.setOperation3(this.getStorageValue(ConfigStorageConstants.OPERATION3) || 'e');
+        this.setOperation4(this.getStorageValue(ConfigStorageConstants.OPERATION4) || 'r');
     };
+
+    private getStorageValue(key: ConfigStorageConstants) {
+        return localStorage.getItem(key);
+    }
+
+    private setStorageValue(key: ConfigStorageConstants, value: any) {
+        localStorage.setItem(key, String(value));
+    }
 
     public static getInstance() {
         if (!ConfigService.instance) {
@@ -56,50 +66,50 @@ export class ConfigService {
     }
 
     public setBoardSize(boardSize: number) {
-        if (boardSize <= 1 || boardSize > 8) boardSize = configDefaults.BOARD_SIZE
-        localStorage.setItem('boardSize', String(boardSize));
+        if (boardSize <= 1 || boardSize > 8) boardSize = ConfigDefaults.BOARD_SIZE
+        this.setStorageValue(ConfigStorageConstants.BOARD_SIZE, boardSize);
         this.boardSize = boardSize;
-        this.eventHandler.emit('boardSizeUpdated', this.boardSize);
+        this.eventHandler.emit(ConfigBroadcastConstants.BOARD_SIZE_UPDATED, this.boardSize);
     }
 
     public setTilesToGen(count: number) {
-        if (count < 1 || count > 8) count = configDefaults.TILES_TO_GEN
-        localStorage.setItem('tilesToGen', String(count));
+        if (count < 1 || count > 8) count = ConfigDefaults.TILES_TO_GEN
+        this.setStorageValue(ConfigStorageConstants.TILES_TO_GEN, count);
         this.tilesToGen = count;
     }
 
     public setTimerMode(set: boolean) {
-        localStorage.setItem('timerMode', String(set));
+        this.setStorageValue(ConfigStorageConstants.TIMER_MODE, set);
         this.timerMode = set;
     }
 
     public setTimerInterval(time: number) {
-        if (time <= 3 || time > 60) time = configDefaults.INTERVAL
-        localStorage.setItem('timerInterval', String(time));
+        if (time <= 3 || time > 60) time = ConfigDefaults.INTERVAL
+        this.setStorageValue(ConfigStorageConstants.TIMER_INTERVAL, time);
         this.timerInterval = time;
     }
 
     public setOperation1(key: String) {
-        localStorage.setItem('oepration1', String(key));
+        this.setStorageValue(ConfigStorageConstants.OPERATION1, key);
         this.operationHotkeys[0] = key;
     }
 
     public setOperation2(key: String) {
-        localStorage.setItem('oepration2', String(key));
+        this.setStorageValue(ConfigStorageConstants.OPERATION2, key);
         this.operationHotkeys[1] = key;
     }
 
     public setOperation3(key: String) {
-        localStorage.setItem('oepration3', String(key));
+        this.setStorageValue(ConfigStorageConstants.OPERATION3, key);
         this.operationHotkeys[2] = key;
     }
 
     public setOperation4(key: String) {
-        localStorage.setItem('oepration4', String(key));
+        this.setStorageValue(ConfigStorageConstants.OPERATION4, key);
         this.operationHotkeys[3] = key;
     }
 
-    public getEventHandlerInstance(): EventEmitter {
-        return this.eventHandler;
+    public on(event: ConfigBroadcastConstants, listener: (...args: any[]) => void): void {
+        this.eventHandler.on(event, listener);
     }
 }

@@ -2,6 +2,7 @@ import EventEmitter from "events";
 import { BoardTileProperties, BoardTileState } from "../components/Board/BoardTileModels";
 import { NumberService } from "./NumberService";
 import { ConfigService } from "./ConfigService";
+import { BoardBroadcastConstants, ConfigBroadcastConstants } from "../constants/EventConstants";
 
 export class BoardService {
     private boardSize!: number;
@@ -12,7 +13,7 @@ export class BoardService {
 
     private static instance: BoardService;
     private eventHandler!: EventEmitter;
-    
+
     private columnCounter!: number[];
     private rowCounter!: number[];
     private diagonalCounter!: number[];
@@ -24,7 +25,7 @@ export class BoardService {
 
         this.eventHandler = new EventEmitter();
         this.setBoardSize(size);
-        this.configService.getEventHandlerInstance().on('boardSizeUpdated', (boardSize: number) => {
+        this.configService.on(ConfigBroadcastConstants.BOARD_SIZE_UPDATED, (boardSize: number) => {
             this.setBoardSize(boardSize);
         });
     }
@@ -53,7 +54,7 @@ export class BoardService {
     }
 
     private broadCastBoardUpdated() {
-        this.eventHandler.emit('boardUpdated');
+        this.eventHandler.emit(BoardBroadcastConstants.BOARD_UPDATED);
     }
 
     private updateBoardCounters(idx: number, increment: number = 1): void {
@@ -82,7 +83,7 @@ export class BoardService {
     }
 
     private verifyBingo(): void {
-        this.eventHandler.emit('GameWon', () => {
+        this.eventHandler.emit(BoardBroadcastConstants.GAME_WON, () => {
             return 'WON'; // placeholder
         });
     }
@@ -94,8 +95,8 @@ export class BoardService {
         return BoardService.instance;
     }
 
-    public getEventHandlerInstance(): EventEmitter {
-        return this.eventHandler;
+    public on(event: BoardBroadcastConstants, listener: (...args: any[]) => void): void {
+        this.eventHandler.on(event, listener);
     }
 
     public resetBoard(): void {

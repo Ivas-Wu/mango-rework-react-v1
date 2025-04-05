@@ -3,6 +3,7 @@ import { Operator, TileProperties, TileState } from '../components/Tiles/TileMod
 import { ConfigService } from './ConfigService';
 import { NumberService } from './NumberService';
 import { TimerService } from './TimerService';
+import { TileBroadcastConstants } from '../constants/EventConstants';
 
 export class TileService {
     private tileIdx: number;
@@ -23,7 +24,7 @@ export class TileService {
         this.configService = ConfigService.getInstance();
         const size = this.configService.getBoardSize();
         this.numberService = new NumberService(size);
-        this.timerService = new TimerService();
+        this.timerService = TimerService.getInstance();
         this.eventHandler = new EventEmitter();
     }
 
@@ -59,7 +60,7 @@ export class TileService {
     }
 
     private broadCastTilesUpdated() {
-        this.eventHandler.emit('tilesUpdated');
+        this.eventHandler.emit(TileBroadcastConstants.TIMES_UPDATED);
     }
 
     private findAllParents(idx: number): number[] {
@@ -78,8 +79,8 @@ export class TileService {
         return TileService.instance;
     }
 
-    public getEventHandlerInstance(): EventEmitter {
-        return this.eventHandler;
+    public on(event: TileBroadcastConstants, listener: (...args: any[]) => void): void {
+        this.eventHandler.on(event, listener);
     }
 
     public reset(): [TileProperties[], TileProperties[]] {

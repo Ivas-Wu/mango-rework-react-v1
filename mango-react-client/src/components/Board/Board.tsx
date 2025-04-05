@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { BoardService } from '../../services/BoardService'
 import { BoardTileProperties } from './BoardTileModels';
 import BoardTile from './BoardTile';
+import { BoardBroadcastConstants } from '../../constants/EventConstants';
 
 interface BoardProps {
     width: number;
@@ -18,7 +19,7 @@ const Board: React.FC<BoardProps> = ({ width, selectedBoardTile, tileToPair, til
     const [board, setBoard] = useState<BoardTileProperties[]>(boardService.getBoardData());
 
     useEffect(() => {
-        boardService.getEventHandlerInstance().on('boardUpdated', () => {
+        boardService.on(BoardBroadcastConstants.BOARD_UPDATED, () => {
             getBoardData();
         });
     }, []);

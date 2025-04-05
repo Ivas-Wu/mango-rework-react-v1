@@ -4,6 +4,7 @@ import { Operator, TileProperties, TileState } from './TileModels';
 import { TileService } from '../../services/TilesService';
 import Operators from './Operators';
 import { ConfigService } from '../../services/ConfigService';
+import { TileBroadcastConstants } from '../../constants/EventConstants';
 
 // const sampleData: TileProperties[] = [
 //     { idx: 1, value: 1, highlighted: false, state: TileState.UNUSED, parents: [], children: [] },
@@ -50,7 +51,7 @@ const TileParent: React.FC<TileParentProps> = ({ selectedTile, validCommit, trig
 
         document.addEventListener("keydown", handleKeyPress);
 
-        tileService.getEventHandlerInstance().on('tilesUpdated', () => {
+        tileService.on(TileBroadcastConstants.TIMES_UPDATED, () => {
             setTiles(...tileService.getTiles());
         });
 
