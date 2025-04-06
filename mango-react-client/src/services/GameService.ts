@@ -14,9 +14,9 @@ export class GameService {
     private static instance: GameService;
 
     private constructor() {
-        this.tileService = TileService.getInstance();
-        this.boardService = BoardService.getInstance();
-        this.configService = ConfigService.getInstance();
+        this.configService = new ConfigService();
+        this.tileService = new TileService(this.configService);
+        this.boardService = new BoardService(this.configService);
         this.timerService = new TimerService(this.configService.getTimerInterval(), () => this.tileService.addTiles(true));
     }
 

@@ -11,15 +11,14 @@ export class BoardService {
     private numberService: NumberService;
     private configService: ConfigService;
 
-    private static instance: BoardService;
     private eventHandler!: EventEmitter;
 
     private columnCounter!: number[];
     private rowCounter!: number[];
     private diagonalCounter!: number[];
 
-    private constructor() {
-        this.configService = ConfigService.getInstance();
+    constructor(configService: ConfigService) {
+        this.configService = configService;
         const size = this.configService.getBoardSize();
         this.numberService = new NumberService(size);
 
@@ -86,13 +85,6 @@ export class BoardService {
         this.eventHandler.emit(BoardBroadcastConstants.GAME_WON, () => {
             return 'WON'; // placeholder
         });
-    }
-
-    public static getInstance(): BoardService {
-        if (!BoardService.instance) {
-            BoardService.instance = new BoardService();
-        }
-        return BoardService.instance;
     }
 
     public on(event: BoardBroadcastConstants, listener: (...args: any[]) => void): void {

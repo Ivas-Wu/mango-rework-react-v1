@@ -11,11 +11,9 @@ export class ConfigService {
     private canPause!: boolean;
     private timerInterval!: number;
 
-    private static instance: ConfigService;
-
     private eventHandler!: EventEmitter;
 
-    private constructor() {
+    constructor() {
         this.eventHandler = new EventEmitter();
 
         this.setBoardSize(Number(this.getStorageValue(ConfigConstants.BOARD_SIZE)) || ConfigDefaults.BOARD_SIZE);
@@ -31,13 +29,6 @@ export class ConfigService {
 
     private setStorageValue(key: ConfigConstants, value: any) {
         localStorage.setItem(key, String(value));
-    }
-
-    public static getInstance() {
-        if (!ConfigService.instance) {
-            ConfigService.instance = new ConfigService();
-        }
-        return ConfigService.instance;
     }
 
     public getBoardSize(): number {

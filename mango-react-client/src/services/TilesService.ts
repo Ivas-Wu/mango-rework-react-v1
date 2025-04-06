@@ -15,12 +15,10 @@ export class TileService {
     private advancedTiles: TileProperties[] = [];
     private eventHandler!: EventEmitter;
 
-    private static instance: TileService;
-
-    private constructor() {
+    constructor(configService: ConfigService) {
         this.tileIdx = 0;
 
-        this.configService = ConfigService.getInstance();
+        this.configService = configService;
         const size = this.configService.getBoardSize();
         this.numberService = new NumberService(size);
         this.eventHandler = new EventEmitter();
@@ -71,13 +69,6 @@ export class TileService {
             res = res.concat(this.findAllParents(parentIdx));
         });
         return res;
-    }
-
-    public static getInstance(): TileService {
-        if (!TileService.instance) {
-            TileService.instance = new TileService();
-        }
-        return TileService.instance;
     }
 
     public on(event: TileBroadcastConstants, listener: (...args: any[]) => void): void {
