@@ -1,5 +1,5 @@
 export const enum TileBroadcastConstants {
-    TIMES_UPDATED = 'tiles_updated',
+    TILES_UPDATED = 'tiles_updated',
 };
 
 export const enum BoardBroadcastConstants {
@@ -8,7 +8,7 @@ export const enum BoardBroadcastConstants {
 };
 
 export const enum ConfigBroadcastConstants {
-    BOARD_SIZE_UPDATED = 'board_size_updated',
+    CONFIGS_UPDATED = 'configs_updated',
 };
 
 export const enum TimeBroadcastConstants {

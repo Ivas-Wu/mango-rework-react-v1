@@ -8,6 +8,7 @@ export class ConfigService {
     private tilesToGen!: number;
 
     private timerMode!: boolean;
+    private canPause!: boolean;
     private timerInterval!: number;
 
     private static instance: ConfigService;
@@ -21,6 +22,7 @@ export class ConfigService {
         this.setBoardSize(Number(this.getStorageValue(ConfigStorageConstants.BOARD_SIZE)) || ConfigDefaults.BOARD_SIZE);
         this.setTilesToGen(Number(this.getStorageValue(ConfigStorageConstants.TILES_TO_GEN)) || ConfigDefaults.TILES_TO_GEN);
         this.setTimerMode(this.getStorageValue(ConfigStorageConstants.TIMER_MODE)?.toLowerCase() === 'true' || ConfigDefaults.TIMER_MODE);
+        this.setCanPause(this.getStorageValue(ConfigStorageConstants.CAN_PAUSE) ? this.getStorageValue(ConfigStorageConstants.CAN_PAUSE)!.toLowerCase() === 'true' : ConfigDefaults.CAN_PAUSE);
         this.setTimerInterval(Number(this.getStorageValue(ConfigStorageConstants.TIMER_INTERVAL)) || ConfigDefaults.INTERVAL);
 
         this.operationHotkeys = new Array(4).fill(0);
@@ -57,6 +59,10 @@ export class ConfigService {
         return this.timerMode;
     }
 
+    public getCanPause(): boolean {
+        return this.canPause;
+    }
+
     public getTimerInterval(): number {
         return this.timerInterval;
     }
@@ -65,51 +71,64 @@ export class ConfigService {
         return this.operationHotkeys[idx];
     }
 
-    public setBoardSize(boardSize: number) {
+    private setBoardSize(boardSize: number) {
         if (boardSize <= 1 || boardSize > 8) boardSize = ConfigDefaults.BOARD_SIZE
         this.setStorageValue(ConfigStorageConstants.BOARD_SIZE, boardSize);
         this.boardSize = boardSize;
-        this.eventHandler.emit(ConfigBroadcastConstants.BOARD_SIZE_UPDATED, this.boardSize);
     }
 
-    public setTilesToGen(count: number) {
+    private setTilesToGen(count: number) {
         if (count < 1 || count > 8) count = ConfigDefaults.TILES_TO_GEN
         this.setStorageValue(ConfigStorageConstants.TILES_TO_GEN, count);
         this.tilesToGen = count;
     }
 
-    public setTimerMode(set: boolean) {
+    private setTimerMode(set: boolean) {
         this.setStorageValue(ConfigStorageConstants.TIMER_MODE, set);
         this.timerMode = set;
     }
 
-    public setTimerInterval(time: number) {
+    private setCanPause(pause: boolean) {
+        this.setStorageValue(ConfigStorageConstants.CAN_PAUSE, pause);
+        this.canPause = pause;
+    }
+
+    private setTimerInterval(time: number) {
         if (time <= 3 || time > 60) time = ConfigDefaults.INTERVAL
         this.setStorageValue(ConfigStorageConstants.TIMER_INTERVAL, time);
         this.timerInterval = time;
     }
 
-    public setOperation1(key: String) {
+    private setOperation1(key: String) {
         this.setStorageValue(ConfigStorageConstants.OPERATION1, key);
         this.operationHotkeys[0] = key;
     }
 
-    public setOperation2(key: String) {
+    private setOperation2(key: String) {
         this.setStorageValue(ConfigStorageConstants.OPERATION2, key);
         this.operationHotkeys[1] = key;
     }
 
-    public setOperation3(key: String) {
+    private setOperation3(key: String) {
         this.setStorageValue(ConfigStorageConstants.OPERATION3, key);
         this.operationHotkeys[2] = key;
     }
 
-    public setOperation4(key: String) {
+    private setOperation4(key: String) {
         this.setStorageValue(ConfigStorageConstants.OPERATION4, key);
         this.operationHotkeys[3] = key;
     }
 
     public on(event: ConfigBroadcastConstants, listener: (...args: any[]) => void): void {
         this.eventHandler.on(event, listener);
+    }
+
+    public save(boardSize: number, tilesToGen: number, timerMode: boolean, canPause: boolean, timerInterval: number) {
+        this.setBoardSize(boardSize);
+        this.setTilesToGen(tilesToGen);
+        this.setTimerMode(timerMode);
+        this.setCanPause(canPause);
+        this.setTimerInterval(timerInterval);
+        this.eventHandler.emit(ConfigBroadcastConstants.CONFIGS_UPDATED, this.boardSize);
     }
 }

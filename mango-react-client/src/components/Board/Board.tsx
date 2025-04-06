@@ -9,12 +9,11 @@ interface BoardProps {
     selectedBoardTile: number | null;
     tileToPair: number | null;
     tileToClear: number | null;
-    triggerReset: boolean;
     setSelectedBoardTile: (idx: number | null) => void;
     refreshBoardState: () => void;
 }
 
-const Board: React.FC<BoardProps> = ({ width, selectedBoardTile, tileToPair, tileToClear, triggerReset, setSelectedBoardTile, refreshBoardState }) => {
+const Board: React.FC<BoardProps> = ({ width, selectedBoardTile, tileToPair, tileToClear, setSelectedBoardTile, refreshBoardState }) => {
     const boardService = BoardService.getInstance();
     const [board, setBoard] = useState<BoardTileProperties[]>(boardService.getBoardData());
 
@@ -23,12 +22,6 @@ const Board: React.FC<BoardProps> = ({ width, selectedBoardTile, tileToPair, til
             getBoardData();
         });
     }, []);
-
-    useEffect(() => {
-        if (triggerReset) {
-            getBoardData();
-        }
-    }, [triggerReset]);
 
     useEffect(() => {
         if (selectedBoardTile == null || tileToPair == null) return
@@ -51,7 +44,6 @@ const Board: React.FC<BoardProps> = ({ width, selectedBoardTile, tileToPair, til
         setSelectedBoardTile(idx);
     };
 
-    const getBoardSizeStyle = () => `grid-cols-${boardService.getBoardSize()}`;
     const getDynamicStyles = (): React.CSSProperties => {
         return {
             gridTemplateColumns: `repeat(${boardService.getBoardSize()}, minmax(0, 1fr))`,

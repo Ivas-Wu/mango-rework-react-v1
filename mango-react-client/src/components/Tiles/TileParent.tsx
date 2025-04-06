@@ -4,22 +4,15 @@ import { Operator, TileProperties, TileState } from './TileModels';
 import { TileService } from '../../services/TilesService';
 import { TileBroadcastConstants } from '../../constants/EventConstants';
 
-export enum TileTriggerMode {
-    NONE = 0,
-    CLEAR_SELECTED = 1,
-    RESET_ALL = 2,
-}
-
 interface TileParentProps {
     selectedTile: number | null;
-    triggerReset: TileTriggerMode;
     selectedOperator: Operator | null;
+    height: number;
     setSelectedTile: (idx: number | null) => void;
-    resetComplete: () => void;
     setSelectedOperator: (operator: Operator | null) => void;
 }
 
-const TileParent: React.FC<TileParentProps> = ({ selectedTile, triggerReset, selectedOperator, setSelectedTile, resetComplete, setSelectedOperator }) => {
+const TileParent: React.FC<TileParentProps> = ({ selectedTile, selectedOperator, height, setSelectedTile, setSelectedOperator }) => {
     const [basicTiles, setBasicTiles] = useState<TileProperties[]>([]);
     const [advancedTiles, setAdvancedTiles] = useState<TileProperties[]>([]);
 
@@ -28,23 +21,10 @@ const TileParent: React.FC<TileParentProps> = ({ selectedTile, triggerReset, sel
     const tileService = TileService.getInstance();
 
     useEffect(() => {
-        tileService.on(TileBroadcastConstants.TIMES_UPDATED, (operation: boolean) => {
+        tileService.on(TileBroadcastConstants.TILES_UPDATED, (operation: boolean) => {
             setTiles(...tileService.getTiles(), operation);
         });
     }, []);
-
-    useEffect(() => {
-        if (triggerReset === TileTriggerMode.RESET_ALL) {
-            clearSelected();
-            setSelectedOperator(null);
-            tileService.reset();
-            resetComplete();            
-        }
-        else if (triggerReset === TileTriggerMode.CLEAR_SELECTED) {
-            clearSelected();
-            resetComplete();  
-        }
-    }, [triggerReset]);
 
     useEffect(() => {
         if (selectedTile != null) {
@@ -83,8 +63,14 @@ const TileParent: React.FC<TileParentProps> = ({ selectedTile, triggerReset, sel
         if (setSelect) setSelectedTile(newAt[newAt.length - 1].idx)
     };
 
+    const getDynamicStyles = (): React.CSSProperties => {
+        return {
+            maxHeight: `${height}lvh`
+        };
+    };
+
     return (
-        <div className='flex flex-col flex-1 pb-1 max-h-full'>
+        <div className={`flex flex-col flex-1 pb-1`} style={getDynamicStyles()}>
             <TileBoard tiles={basicTiles} selectedTile={selectedTile} highlightedTiles={highlightedTiles} onTileClick={clickTile}></TileBoard>
             <TileBoard tiles={advancedTiles} selectedTile={selectedTile} highlightedTiles={highlightedTiles} onTileClick={clickTile}></TileBoard>
         </div>

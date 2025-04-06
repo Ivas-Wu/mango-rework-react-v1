@@ -9,10 +9,11 @@ interface ConfigModalProps {
 const ConfigModal: React.FC<ConfigModalProps> = ({ onClose }) => {
     const configService = ConfigService.getInstance();
 
-    const [boardSize, setBoardSize] = useState(configService.getBoardSize());
-    const [tilesToGen, setTilesToGen] = useState(configService.getTilesToGen());
-    const [timerMode, setTimerMode] = useState(configService.getTimerMode());
-    const [timerInterval, setTimerInterval] = useState(configService.getTimerInterval());
+    const [boardSize, setBoardSize] = useState<number>(configService.getBoardSize());
+    const [tilesToGen, setTilesToGen] = useState<number>(configService.getTilesToGen());
+    const [timerMode, setTimerMode] = useState<boolean>(configService.getTimerMode());
+    const [canPause, setCanPause] = useState<boolean>(configService.getCanPause());
+    const [timerInterval, setTimerInterval] = useState<number>(configService.getTimerInterval());
 
 
     const handleSliderValueChange = (e: React.ChangeEvent<HTMLInputElement>, setterFunction: (value: any) => void) => {
@@ -22,16 +23,12 @@ const ConfigModal: React.FC<ConfigModalProps> = ({ onClose }) => {
         }
     };
 
-    const handleTimerToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setTimerMode(e.target.checked || false);
+    const handleTimerToggle = (e: React.ChangeEvent<HTMLInputElement>, setterFunction: (value: any) => void) => {
+        setterFunction(e.target.checked || false);
     };
 
     const saveConfigs = () => {
-        configService.setBoardSize(boardSize);
-        configService.setTilesToGen(tilesToGen);
-
-        configService.setTimerMode(timerMode);
-        configService.setTimerInterval(timerInterval);
+        configService.save(boardSize, tilesToGen, timerMode, canPause, timerInterval);
         onClose();
     };
 
@@ -63,19 +60,28 @@ const ConfigModal: React.FC<ConfigModalProps> = ({ onClose }) => {
                 <div className="flex items-center space-x-4">
                     <span>Timer Mode</span>
                     <label className="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" checked={timerMode} onChange={handleTimerToggle} className="sr-only peer" />
+                        <input type="checkbox" checked={timerMode} onChange={(e) => handleTimerToggle(e, setTimerMode)} className="sr-only peer" />
                         <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:bg-red-500 after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5 peer-checked:after:border-white"></div>
                     </label>
                 </div>
 
                 {timerMode &&
-                    <ConfigSlider
-                        title='Timer'
-                        value={timerInterval}
-                        min={2}
-                        max={120}
-                        callback={(e) => handleSliderValueChange(e, setTimerInterval)}
-                    />
+                    <div>
+                        <div className="flex items-center space-x-4">
+                            <span>Can Pause</span>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" checked={canPause} onChange={(e) => handleTimerToggle(e, setCanPause)} className="sr-only peer" />
+                                <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:bg-red-500 after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5 peer-checked:after:border-white"></div>
+                            </label>
+                        </div>
+                        <ConfigSlider
+                            title='Timer'
+                            value={timerInterval}
+                            min={2}
+                            max={120}
+                            callback={(e) => handleSliderValueChange(e, setTimerInterval)}
+                        />
+                    </div>
                 }
 
                 <button

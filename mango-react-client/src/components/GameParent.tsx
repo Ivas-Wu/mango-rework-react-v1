@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import Board from "./Board/Board";
-import TileParent, { TileTriggerMode } from "./Tiles/TileParent";
+import TileParent from "./Tiles/TileParent";
 import { BoardService } from '../services/BoardService';
 import { TileService } from '../services/TilesService';
 import { Operator, TileProperties, TileState } from './Tiles/TileModels';
@@ -29,7 +29,6 @@ const GameParent: React.FC<GameParentProps> = ({ height }) => {
     const [tileToPair, setTileToPair] = useState<number | null>(null);
     const [tileToClear, setTileToClear] = useState<number | null>(null);
 
-    const [tileReset, setTileReset] = useState<TileTriggerMode>(0);
     const [gameDone, setGameDone] = useState<boolean>(false);
 
     const boardService = BoardService.getInstance();
@@ -37,6 +36,7 @@ const GameParent: React.FC<GameParentProps> = ({ height }) => {
     const configService = ConfigService.getInstance();
     const timerService = new TimerService(configService.getTimerInterval(), () => tileService.addTiles(true));
     const actionBarHeight = Math.floor(height / 8);
+
 
     useEffect(() => {
         boardService.on(BoardBroadcastConstants.GAME_WON, (message) => {
@@ -66,7 +66,7 @@ const GameParent: React.FC<GameParentProps> = ({ height }) => {
         };
 
         document.addEventListener("keydown", handleKeyPress);
-        
+
         return () => {
             document.removeEventListener("keydown", handleKeyPress);
         };
@@ -128,7 +128,7 @@ const GameParent: React.FC<GameParentProps> = ({ height }) => {
         if (!selectedTile) return
         tileService.clearTile(selectedTile!);
         setTileToClear(selectedTile ? boardService.getBoardTileByTileIdx(selectedTile)?.idx ?? null : null);
-        setTileReset(TileTriggerMode.CLEAR_SELECTED);
+        setSelectedTile(null);
     };
 
     const commitTile = () => {
@@ -140,8 +140,6 @@ const GameParent: React.FC<GameParentProps> = ({ height }) => {
 
     const resetGame = () => {
         setGameDone(false);
-        setTileReset(TileTriggerMode.RESET_ALL);
-        boardService.resetBoard();
         setSelectedBoardTile(null);
         setSelectedTile(null);
         setSelectedBoardTileFull(null);
@@ -149,40 +147,35 @@ const GameParent: React.FC<GameParentProps> = ({ height }) => {
         setValidPair(false);
         setTileToClear(null);
         setTileToPair(null);
-    }
-
-    const resetCallback = () => {
-        setTileReset(TileTriggerMode.NONE);
+        timerService.reset();
     }
 
     return (
-        <div className={`flex flex-col flex-1 overflow-auto`} style={getDynamicStyles()}>
-            <div className={`grid grid-cols-2 p-4`}>
+        <div className={`flex flex-col flex-1 overflow-auto`} style={{ height: `${height}vh` }}>
+            <div className={`grid grid-cols-2 p-4`} style={getDynamicStyles()}>
                 <TileParent
+                    height={getAdjustedHeight()}
                     selectedTile={selectedTile}
-                    triggerReset={tileReset}
                     selectedOperator={selectedOperator}
                     setSelectedTile={setSelectedTile}
-                    resetComplete={resetCallback}
                     setSelectedOperator={setSelectedOperator}
                 />
-
                 <Board
                     width={getAdjustedHeight()}
                     selectedBoardTile={selectedBoardTile}
                     tileToPair={tileToPair}
                     tileToClear={tileToClear}
-                    triggerReset={!gameDone}
                     setSelectedBoardTile={setSelectedBoardTile}
                     refreshBoardState={() => updateFullBoardTile()}
                 />
             </div>
-            <Timer timerService={timerService}/>
+            <Timer timerService={timerService} />
             <ActionBar
                 height={actionBarHeight}
                 validCommit={validPair}
                 selectedOperator={selectedOperator}
                 timerMode={configService.getTimerMode()}
+                canPause={configService.getCanPause()}
                 timerService={timerService}
                 addTiles={() => tileService.addTiles()}
                 clearTile={clearTile}

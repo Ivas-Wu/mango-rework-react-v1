@@ -32,6 +32,10 @@ export class TimerService {
         this.eventHandler = new EventEmitter();
     }
 
+    public reset() {
+        this.stopTimer();
+    }
+
     public setInterval(interval: number) {
         this.interval = interval * 1000;
     }

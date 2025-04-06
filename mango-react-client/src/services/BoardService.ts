@@ -25,7 +25,7 @@ export class BoardService {
 
         this.eventHandler = new EventEmitter();
         this.setBoardSize(size);
-        this.configService.on(ConfigBroadcastConstants.BOARD_SIZE_UPDATED, (boardSize: number) => {
+        this.configService.on(ConfigBroadcastConstants.CONFIGS_UPDATED, (boardSize: number) => {
             this.setBoardSize(boardSize);
         });
     }
@@ -97,11 +97,6 @@ export class BoardService {
 
     public on(event: BoardBroadcastConstants, listener: (...args: any[]) => void): void {
         this.eventHandler.on(event, listener);
-    }
-
-    public resetBoard(): void {
-        this.setBoardSize(this.boardSize);
-        this.broadCastBoardUpdated();
     }
 
     public getBoardSize(): number {

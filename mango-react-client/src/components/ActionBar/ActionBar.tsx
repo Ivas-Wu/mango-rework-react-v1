@@ -10,6 +10,7 @@ interface ActionbarProps {
     validCommit: boolean;
     selectedOperator: Operator | null;
     timerMode: boolean;
+    canPause: boolean;
     timerService: TimerService;
     addTiles: () => void;
     clearTile: () => void;
@@ -23,6 +24,7 @@ const ActionBar: React.FC<ActionbarProps> = ({
     validCommit,
     selectedOperator,
     timerMode,
+    canPause,
     timerService,
     addTiles,
     clearTile,
@@ -33,29 +35,34 @@ const ActionBar: React.FC<ActionbarProps> = ({
     const [paused, setPaused] = useState<boolean>(false);
 
     useEffect(() => {
-            const onStart = (interval: number) => {
-                setStarted(true);
-            };
-        
-            const onPause = (ms: number) => {
-                setPaused(true);
-            };
+        const onStart = (interval: number) => {
+            setStarted(true);
+        };
 
-            const onResume = () => {
-                setPaused(false);
-            }
-        
-            timerService.on(TimeBroadcastConstants.TIMER_STARTED, onStart);
+        const onPause = (ms: number) => {
+            setPaused(true);
+        };
+
+        const onResume = () => {
+            setPaused(false);
+        }
+
+        if (canPause) {
             timerService.on(TimeBroadcastConstants.TIMER_PAUSED, onPause);
             timerService.on(TimeBroadcastConstants.TIMER_RESUMED, onResume);
-        
-            return () => {
-                timerService.off(TimeBroadcastConstants.TIMER_STARTED, onStart);
+        }
+        timerService.on(TimeBroadcastConstants.TIMER_STARTED, onStart);
+
+
+        return () => {
+            timerService.off(TimeBroadcastConstants.TIMER_STARTED, onStart);
+            if (canPause) {
                 timerService.off(TimeBroadcastConstants.TIMER_PAUSED, onPause);
                 timerService.on(TimeBroadcastConstants.TIMER_RESUMED, onResume);
-            };
-        }, [timerService]);
-        
+            }
+        };
+    }, [timerService]);
+
     const getDynamicStyles = (): React.CSSProperties => {
         return {
             height: `${height}lvh`
@@ -70,24 +77,35 @@ const ActionBar: React.FC<ActionbarProps> = ({
                     onClick={() => addTiles()}
                 />
             }
-            {timerMode && !started &&
-                <ActionBarButton
-                    value='Start Timer'
-                    onClick={() => timerService.startTimer()}
-                />
-            }
-            {timerMode && started && !paused &&
-                <ActionBarButton
-                    value='Pause Timer'
-                    onClick={() => timerService.pauseTimer()}
-                />
-            }
-            {timerMode && started && paused &&
-                <ActionBarButton
-                    value='Resume Timer'
-                    onClick={() => timerService.resumeTimer()}
-                />
-            }
+            {timerMode && (
+                <>
+                    {(!started || !canPause) && (
+                        <ActionBarButton
+                            value="Start Timer"
+                            onClick={() => timerService.startTimer()}
+                            disabled={started}
+                        />
+                    )}
+
+                    {started && canPause && (
+                        <>
+                            {!paused ? (
+                                <ActionBarButton
+                                    value="Pause Timer"
+                                    onClick={() => timerService.pauseTimer()}
+                                />
+                            ) : (
+                                <ActionBarButton
+                                    value="Resume Timer"
+                                    onClick={() => timerService.resumeTimer()}
+                                />
+                            )}
+                        </>
+                    )}
+                </>
+            )}
+
+
             <ActionBarButton
                 value='Clear'
                 onClick={() => clearTile()}
