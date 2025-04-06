@@ -11,12 +11,16 @@ import { BoardBroadcastConstants } from '../constants/EventConstants';
 import ActionBar from './ActionBar/ActionBar';
 import { ConfigService } from '../services/ConfigService';
 import { TimerService } from '../services/TimerService';
+import { ControlsService } from '../services/ControlsService';
+import { GameService } from '../services/GameService';
 
 interface GameParentProps {
+    gameService: GameService;
+    controlsService: ControlsService;
     height: number;
 }
 
-const GameParent: React.FC<GameParentProps> = ({ height }) => {
+const GameParent: React.FC<GameParentProps> = ({ gameService, controlsService, height }) => {
     const [selectedTile, setSelectedTile] = useState<number | null>(null); // Based on tile idx
     const [selectedBoardTile, setSelectedBoardTile] = useState<number | null>(null); // Based on board idx
 
@@ -31,10 +35,11 @@ const GameParent: React.FC<GameParentProps> = ({ height }) => {
 
     const [gameDone, setGameDone] = useState<boolean>(false);
 
-    const boardService = BoardService.getInstance();
-    const tileService = TileService.getInstance();
-    const configService = ConfigService.getInstance();
-    const timerService = new TimerService(configService.getTimerInterval(), () => tileService.addTiles(true));
+    const tileService = gameService.getTileService();
+    const boardService = gameService.getBoardService();
+    const configService = gameService.getConfigService();
+    const timerService = gameService.getTimerService();
+
     const actionBarHeight = Math.floor(height / 8);
 
 
@@ -48,16 +53,16 @@ const GameParent: React.FC<GameParentProps> = ({ height }) => {
     useEffect(() => {
         const handleKeyPress = (event: KeyboardEvent) => {
             switch (event.key) {
-                case configService.getOperation(0):
+                case controlsService.getOperation(0):
                     setSelectedOperator(Operator.ADD);
                     return
-                case configService.getOperation(1):
+                case controlsService.getOperation(1):
                     setSelectedOperator(Operator.SUBTRACT);
                     return
-                case configService.getOperation(2):
+                case controlsService.getOperation(2):
                     setSelectedOperator(Operator.MULTIPLY);
                     return
-                case configService.getOperation(3):
+                case controlsService.getOperation(3):
                     setSelectedOperator(Operator.DIVIDE);
                     return
                 default:
@@ -154,6 +159,7 @@ const GameParent: React.FC<GameParentProps> = ({ height }) => {
         <div className={`flex flex-col flex-1 overflow-auto`} style={{ height: `${height}vh` }}>
             <div className={`grid grid-cols-2 p-4`} style={getDynamicStyles()}>
                 <TileParent
+                    tileService={tileService}
                     height={getAdjustedHeight()}
                     selectedTile={selectedTile}
                     selectedOperator={selectedOperator}
@@ -161,6 +167,7 @@ const GameParent: React.FC<GameParentProps> = ({ height }) => {
                     setSelectedOperator={setSelectedOperator}
                 />
                 <Board
+                    boardService={boardService}
                     width={getAdjustedHeight()}
                     selectedBoardTile={selectedBoardTile}
                     tileToPair={tileToPair}

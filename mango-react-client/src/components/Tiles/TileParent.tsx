@@ -5,6 +5,7 @@ import { TileService } from '../../services/TilesService';
 import { TileBroadcastConstants } from '../../constants/EventConstants';
 
 interface TileParentProps {
+    tileService: TileService;
     selectedTile: number | null;
     selectedOperator: Operator | null;
     height: number;
@@ -12,13 +13,11 @@ interface TileParentProps {
     setSelectedOperator: (operator: Operator | null) => void;
 }
 
-const TileParent: React.FC<TileParentProps> = ({ selectedTile, selectedOperator, height, setSelectedTile, setSelectedOperator }) => {
+const TileParent: React.FC<TileParentProps> = ({ tileService, selectedTile, selectedOperator, height, setSelectedTile, setSelectedOperator }) => {
     const [basicTiles, setBasicTiles] = useState<TileProperties[]>([]);
     const [advancedTiles, setAdvancedTiles] = useState<TileProperties[]>([]);
 
     const [highlightedTiles, setHighlightedTiles] = useState<number[]>([]);
-
-    const tileService = TileService.getInstance();
 
     useEffect(() => {
         tileService.on(TileBroadcastConstants.TILES_UPDATED, (operation: boolean) => {

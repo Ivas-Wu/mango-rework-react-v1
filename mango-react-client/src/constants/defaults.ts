@@ -5,3 +5,10 @@ export const ConfigDefaults = {
     CAN_PAUSE: true,
     INTERVAL: 15,
 };
+
+export const ControlDefaults = {
+    ADD: 'q',
+    SUBTRACT: 'w',
+    MULTIPLY: 'e',
+    DIVIDE: 'r',
+};

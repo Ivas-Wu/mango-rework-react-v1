@@ -3,12 +3,11 @@ import { ConfigService } from '../../services/ConfigService';
 import ConfigSlider from './ConfigSlider';
 
 interface ConfigModalProps {
+    configService: ConfigService;
     onClose: () => void;
 }
 
-const ConfigModal: React.FC<ConfigModalProps> = ({ onClose }) => {
-    const configService = ConfigService.getInstance();
-
+const ConfigModal: React.FC<ConfigModalProps> = ({ configService, onClose }) => {
     const [boardSize, setBoardSize] = useState<number>(configService.getBoardSize());
     const [tilesToGen, setTilesToGen] = useState<number>(configService.getTilesToGen());
     const [timerMode, setTimerMode] = useState<boolean>(configService.getTimerMode());

@@ -5,6 +5,7 @@ import BoardTile from './BoardTile';
 import { BoardBroadcastConstants } from '../../constants/EventConstants';
 
 interface BoardProps {
+    boardService: BoardService;
     width: number;
     selectedBoardTile: number | null;
     tileToPair: number | null;
@@ -13,8 +14,7 @@ interface BoardProps {
     refreshBoardState: () => void;
 }
 
-const Board: React.FC<BoardProps> = ({ width, selectedBoardTile, tileToPair, tileToClear, setSelectedBoardTile, refreshBoardState }) => {
-    const boardService = BoardService.getInstance();
+const Board: React.FC<BoardProps> = ({ boardService, width, selectedBoardTile, tileToPair, tileToClear, setSelectedBoardTile, refreshBoardState }) => {
     const [board, setBoard] = useState<BoardTileProperties[]>(boardService.getBoardData());
 
     useEffect(() => {
