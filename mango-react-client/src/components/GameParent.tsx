@@ -35,7 +35,7 @@ const GameParent: React.FC<GameParentProps> = ({ height }) => {
     const boardService = BoardService.getInstance();
     const tileService = TileService.getInstance();
     const configService = ConfigService.getInstance();
-    const timerService = new TimerService(configService.getTimerInterval());
+    const timerService = new TimerService(configService.getTimerInterval(), () => tileService.addTiles(true));
     const actionBarHeight = Math.floor(height / 8);
 
     useEffect(() => {
@@ -183,9 +183,8 @@ const GameParent: React.FC<GameParentProps> = ({ height }) => {
                 validCommit={validPair}
                 selectedOperator={selectedOperator}
                 timerMode={configService.getTimerMode()}
-                // timerStarted={tile.}
+                timerService={timerService}
                 addTiles={() => tileService.addTiles()}
-                startTimer={() => timerService.startTimer(() => tileService.addTiles(true))}
                 clearTile={clearTile}
                 commitTile={commitTile}
                 setSelectedOperator={setSelectedOperator}

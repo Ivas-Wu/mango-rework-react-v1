@@ -13,5 +13,7 @@ export const enum ConfigBroadcastConstants {
 
 export const enum TimeBroadcastConstants {
     TIMER_STARTED = 'timer_started',
-    TIME_REMAINING = 'time_remaining'
+    TIME_REMAINING = 'time_remaining',
+    TIMER_PAUSED = 'timer_paused',
+    TIMER_RESUMED = 'timer_resumed',
 };

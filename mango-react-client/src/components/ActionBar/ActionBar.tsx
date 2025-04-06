@@ -1,24 +1,61 @@
-import React from 'react'
-import { TileService } from '../../services/TilesService';
+import React, { useEffect, useState } from 'react'
 import { Operator } from '../Tiles/TileModels';
 import Operators from './Operators';
 import ActionBarButton from './ActionBarButton';
+import { TimerService } from '../../services/TimerService';
+import { TimeBroadcastConstants } from '../../constants/EventConstants';
 
 interface ActionbarProps {
     height: number;
     validCommit: boolean;
     selectedOperator: Operator | null;
     timerMode: boolean;
-    timerStarted?: boolean;
+    timerService: TimerService;
     addTiles: () => void;
-    startTimer: () => void;
     clearTile: () => void;
     commitTile: () => void;
     setSelectedOperator: (operator: Operator | null) => void;
 }
 
 
-const ActionBar: React.FC<ActionbarProps> = ({ height, validCommit, selectedOperator, timerMode, timerStarted, addTiles, startTimer, clearTile, commitTile, setSelectedOperator }) => {
+const ActionBar: React.FC<ActionbarProps> = ({
+    height,
+    validCommit,
+    selectedOperator,
+    timerMode,
+    timerService,
+    addTiles,
+    clearTile,
+    commitTile,
+    setSelectedOperator
+}) => {
+    const [started, setStarted] = useState<boolean>(false);
+    const [paused, setPaused] = useState<boolean>(false);
+
+    useEffect(() => {
+            const onStart = (interval: number) => {
+                setStarted(true);
+            };
+        
+            const onPause = (ms: number) => {
+                setPaused(true);
+            };
+
+            const onResume = () => {
+                setPaused(false);
+            }
+        
+            timerService.on(TimeBroadcastConstants.TIMER_STARTED, onStart);
+            timerService.on(TimeBroadcastConstants.TIMER_PAUSED, onPause);
+            timerService.on(TimeBroadcastConstants.TIMER_RESUMED, onResume);
+        
+            return () => {
+                timerService.off(TimeBroadcastConstants.TIMER_STARTED, onStart);
+                timerService.off(TimeBroadcastConstants.TIMER_PAUSED, onPause);
+                timerService.on(TimeBroadcastConstants.TIMER_RESUMED, onResume);
+            };
+        }, [timerService]);
+        
     const getDynamicStyles = (): React.CSSProperties => {
         return {
             height: `${height}lvh`
@@ -33,11 +70,22 @@ const ActionBar: React.FC<ActionbarProps> = ({ height, validCommit, selectedOper
                     onClick={() => addTiles()}
                 />
             }
-            {timerMode &&
+            {timerMode && !started &&
                 <ActionBarButton
                     value='Start Timer'
-                    onClick={() => startTimer()}
-                    disabled={timerStarted}
+                    onClick={() => timerService.startTimer()}
+                />
+            }
+            {timerMode && started && !paused &&
+                <ActionBarButton
+                    value='Pause Timer'
+                    onClick={() => timerService.pauseTimer()}
+                />
+            }
+            {timerMode && started && paused &&
+                <ActionBarButton
+                    value='Resume Timer'
+                    onClick={() => timerService.resumeTimer()}
                 />
             }
             <ActionBarButton

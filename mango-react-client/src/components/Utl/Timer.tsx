@@ -26,7 +26,7 @@ const Timer: React.FC<TimerProps> = ({ timerService }) => {
             timerService.off(TimeBroadcastConstants.TIMER_STARTED, onStart);
             timerService.off(TimeBroadcastConstants.TIME_REMAINING, onRemaining);
         };
-    }, []);
+    }, [timerService]);
 
     return (
         <div className='border-solid border-2 border-slate-800 p-4 rounded-md overflow-y-scroll'>
