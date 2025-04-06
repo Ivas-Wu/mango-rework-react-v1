@@ -78,13 +78,13 @@ const GameParent: React.FC<GameParentProps> = ({ gameService, controlsService, h
     }, []);
 
     useEffect(() => {
+        updateFullTile();
         if (selectedBoardTileFull?.state === BoardTileState.COMPLETE) {
             setSelectedBoardTile(null);
         }
         if (selectedTile != null) {
             const baseTile: TileProperties = tileService.findBaseChild(selectedTile);
             const boardTile = boardService.getBoardTileByTileIdx(baseTile.idx);
-            updateFullTile();
             if (boardTile) {
                 setSelectedBoardTile(boardTile.idx);
             }
@@ -101,6 +101,9 @@ const GameParent: React.FC<GameParentProps> = ({ gameService, controlsService, h
                 setSelectedTile(null);
             }
             setSelectedBoardTileFull(tile);
+        }
+        else {
+            setSelectedBoardTileFull(null);
         }
     }, [selectedBoardTile]);
 
@@ -124,9 +127,8 @@ const GameParent: React.FC<GameParentProps> = ({ gameService, controlsService, h
         setSelectedBoardTileFull(tile !== undefined ? tile : boardService.getBoardTileByIdx(selectedBoardTile))
     };
 
-    const updateFullTile = (tile?: TileProperties) => {
-        if (selectedTile == null) return
-        setSelectedTileFull(tile !== undefined ? tile : tileService.getTileFromIdx(selectedTile))
+    const updateFullTile = () => {
+        setSelectedTileFull(selectedTile ? tileService.getTileFromIdx(selectedTile) : null);
     };
 
     const clearTile = () => {
@@ -142,6 +144,10 @@ const GameParent: React.FC<GameParentProps> = ({ gameService, controlsService, h
         setTileToPair(selectedTile);
         updateFullTile();
     };
+
+    const getValidClear = ():boolean => {
+        return selectedTileFull?.child || (selectedTileFull?.parents && selectedTileFull?.parents.length > 0) ? true : false;
+    }
 
     const resetGame = () => {
         setGameDone(false);
@@ -179,6 +185,7 @@ const GameParent: React.FC<GameParentProps> = ({ gameService, controlsService, h
             <Timer timerService={timerService} />
             <ActionBar
                 height={actionBarHeight}
+                validClear={getValidClear()}
                 validCommit={validPair}
                 selectedOperator={selectedOperator}
                 timerMode={configService.getTimerMode()}

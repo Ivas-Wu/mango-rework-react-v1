@@ -7,6 +7,7 @@ import { TimeBroadcastConstants } from '../../constants/EventConstants';
 
 interface ActionbarProps {
     height: number;
+    validClear: boolean;
     validCommit: boolean;
     selectedOperator: Operator | null;
     timerMode: boolean;
@@ -21,6 +22,7 @@ interface ActionbarProps {
 
 const ActionBar: React.FC<ActionbarProps> = ({
     height,
+    validClear,
     validCommit,
     selectedOperator,
     timerMode,
@@ -109,6 +111,7 @@ const ActionBar: React.FC<ActionbarProps> = ({
             <ActionBarButton
                 value='Clear'
                 onClick={() => clearTile()}
+                disabled={!validClear}
             />
             <ActionBarButton
                 value='Commit'
