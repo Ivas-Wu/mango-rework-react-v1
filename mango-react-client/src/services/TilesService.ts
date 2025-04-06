@@ -10,7 +10,6 @@ export class TileService {
 
     private configService: ConfigService;
     private numberService: NumberService;
-    private timerService: TimerService;
 
     private basicTiles: TileProperties[] = [];
     private advancedTiles: TileProperties[] = [];
@@ -24,7 +23,6 @@ export class TileService {
         this.configService = ConfigService.getInstance();
         const size = this.configService.getBoardSize();
         this.numberService = new NumberService(size);
-        this.timerService = TimerService.getInstance();
         this.eventHandler = new EventEmitter();
     }
 
@@ -59,8 +57,8 @@ export class TileService {
         return newTile;
     }
 
-    private broadCastTilesUpdated() {
-        this.eventHandler.emit(TileBroadcastConstants.TIMES_UPDATED);
+    private broadCastTilesUpdated(operation: boolean = false) {
+        this.eventHandler.emit(TileBroadcastConstants.TIMES_UPDATED, operation);
     }
 
     private findAllParents(idx: number): number[] {
@@ -83,10 +81,10 @@ export class TileService {
         this.eventHandler.on(event, listener);
     }
 
-    public reset(): [TileProperties[], TileProperties[]] {
+    public reset() {
         this.basicTiles = [];
         this.advancedTiles = [];
-        return this.getTiles();
+        this.broadCastTilesUpdated();
     }
 
     public getTiles(): [TileProperties[], TileProperties[]] {
@@ -101,7 +99,8 @@ export class TileService {
         return tile;
     }
 
-    public addTiles(): void {
+    public addTiles(fromTimer: boolean = false): void {
+        if (this.configService.getTimerMode() !== fromTimer) return // only allow timer to create tiles during timer mode   
         this.generateBasicTiles();
         this.broadCastTilesUpdated();
     }
@@ -172,7 +171,7 @@ export class TileService {
             tile.idx === idx1 || tile.idx === idx2 ? { ...tile, state: TileState.HELD, child: newTile } : tile
         );
 
-        this.broadCastTilesUpdated();
+        this.broadCastTilesUpdated(true);
     }
 
     public setTileUsed(idx: number): void {
@@ -184,16 +183,5 @@ export class TileService {
         );
 
         this.broadCastTilesUpdated();
-    }
-
-    public startTimer() {
-        if (!this.configService.getTimerMode()) return
-        this.timerService.setInterval(this.configService.getTimerInterval());
-        this.timerService.startTimer(() => this.addTiles());
-    }
-
-    public stopTimer() {
-        this.timerService.stopTimer();
-        // logging service to record records
     }
 }

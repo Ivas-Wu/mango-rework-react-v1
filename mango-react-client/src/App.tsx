@@ -4,20 +4,30 @@ import Navbar from "./components/Navbar/Navbar";
 import ConfigModal from "./components/Config/ConfigModal";
 
 function App() {
-  const [navbarHeight, setNavbarHeight] = useState<number>(7);
+  const NavbarHeightConst = 7;
+  const [navbarHeight, setNavbarHeight] = useState<number>(NavbarHeightConst);
   const [showConfig, setShowConfig] = useState<boolean>(false);
 
   const toggleConfigs = (override?: boolean) => {
     setShowConfig(override || !showConfig);
   }
 
+  const toggleNavbar = (hidden: boolean) => {
+    setNavbarHeight(hidden ? 0 : NavbarHeightConst);
+  }
+
+  const getBodyHeight = () => {
+    return 100 - navbarHeight;
+  }
+
   return (
     <div className="flex flex-col h-screen">
       <Navbar
         height={navbarHeight}
-        openConfigs={() => toggleConfigs(true)} />
+        openConfigs={() => toggleConfigs(true)}
+        hideBar={toggleNavbar} />
       <GameParent
-        height={100 - navbarHeight} />
+        height={getBodyHeight()} />
       {
         showConfig &&
         <ConfigModal

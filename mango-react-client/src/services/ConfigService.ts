@@ -20,7 +20,7 @@ export class ConfigService {
 
         this.setBoardSize(Number(this.getStorageValue(ConfigStorageConstants.BOARD_SIZE)) || ConfigDefaults.BOARD_SIZE);
         this.setTilesToGen(Number(this.getStorageValue(ConfigStorageConstants.TILES_TO_GEN)) || ConfigDefaults.TILES_TO_GEN);
-        this.setTimerMode(Boolean(this.getStorageValue(ConfigStorageConstants.TIMER_MODE)) || ConfigDefaults.TIMER_MODE);
+        this.setTimerMode(this.getStorageValue(ConfigStorageConstants.TIMER_MODE)?.toLowerCase() === 'true' || ConfigDefaults.TIMER_MODE);
         this.setTimerInterval(Number(this.getStorageValue(ConfigStorageConstants.TIMER_INTERVAL)) || ConfigDefaults.INTERVAL);
 
         this.operationHotkeys = new Array(4).fill(0);

@@ -6,24 +6,27 @@ export class TimerService {
     private interval: number;
     private startTime!: number;
     private remainingTime!: number;
-    
+    private paused: boolean;
+    private callback: () => void = () => {};
+
     private eventHandler: EventEmitter;
 
-    public static instance: TimerService;
+    // public static instance: TimerService;
 
-    private constructor() {
+    public constructor(interval: number) {
         this.timerId = null;
-        this.interval = 15000;
+        this.interval = interval * 1000;
         this.remainingTime = this.interval;
+        this.paused = false;
         this.eventHandler = new EventEmitter();
     }
 
-    public static getInstance(): TimerService {
-        if (!TimerService.instance) {
-            TimerService.instance = new TimerService();
-        }
-        return TimerService.instance;
-    }
+    // public static getInstance(interval: number): TimerService {
+    //     if (!TimerService.instance) {
+    //         TimerService.instance = new TimerService();
+    //     }
+    //     return TimerService.instance;
+    // }
 
     public setInterval(interval: number) {
         this.interval = interval * 1000;
@@ -36,13 +39,14 @@ export class TimerService {
     public off(event: TimeBroadcastConstants, listener: (...args: any[]) => void): void {
         this.eventHandler.off(event, listener);
     }
+    
 
     public startTimer(callback: () => void): void {
         if (this.timerId !== null) return;
-
+        this.callback = callback;
         const tick = () => {
             this.startTime = Date.now();
-            callback();
+            this.callback();
             this.eventHandler.emit(TimeBroadcastConstants.TIMER_STARTED, this.interval);
 
             this.timerId = setTimeout(() => {
@@ -76,6 +80,30 @@ export class TimerService {
         if (this.timerId !== null) {
             clearTimeout(this.timerId);
             this.timerId = null;
+        }
+    }
+
+    public pauseTimer(): void {
+        if (this.timerId !== null && !this.paused) {
+            clearTimeout(this.timerId);
+            this.timerId = null;
+            this.paused = true;
+            const elapsed = Date.now() - this.startTime;
+            this.remainingTime = Math.max(this.interval - elapsed, 0);
+        }
+    }
+
+    public resumeTimer(): void {
+        if (this.paused && this.timerId === null) {
+            this.paused = false;
+            this.startTime = Date.now();
+
+            this.timerId = setTimeout(() => {
+                this.callback();
+                this.startTimer(this.callback);
+            }, this.remainingTime);
+
+            this.updateTimeRemaining();
         }
     }
 }

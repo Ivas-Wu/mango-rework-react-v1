@@ -52,9 +52,17 @@ const Board: React.FC<BoardProps> = ({ width, selectedBoardTile, tileToPair, til
     };
 
     const getBoardSizeStyle = () => `grid-cols-${boardService.getBoardSize()}`;
+    const getDynamicStyles = (): React.CSSProperties => {
+        return {
+            gridTemplateColumns: `repeat(${boardService.getBoardSize()}, minmax(0, 1fr))`,
+            maxWidth: `${width}lvh`
+        };
+    };
 
     return (
-        <div className={`grid gap-1 p-4 max-w-[${width}lvh]`} style={{ gridTemplateColumns: `repeat(${boardService.getBoardSize()}, minmax(0, 1fr))` }}>
+        <div
+            className={`grid gap-1 p-4`}
+            style={getDynamicStyles()} >
             {board.map((b) => {
                 return <BoardTile {...b} selected={selectedBoardTile === b.idx} onBoardTileClick={onBoardTileClick}></BoardTile>
             })}
