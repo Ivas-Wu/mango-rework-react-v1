@@ -1,26 +1,20 @@
 import React, { useEffect, useState } from 'react'
 import Board from "./Board/Board";
 import TileParent from "./Tiles/TileParent";
-import { BoardService } from '../services/BoardService';
-import { TileService } from '../services/TilesService';
 import { Operator, TileProperties, TileState } from './Tiles/TileModels';
 import { BoardTileProperties, BoardTileState } from './Board/BoardTileModels';
 import GameOverModal from './Utl/GameOverModal';
 import Timer from './Utl/Timer';
 import { BoardBroadcastConstants } from '../constants/EventConstants';
 import ActionBar from './ActionBar/ActionBar';
-import { ConfigService } from '../services/ConfigService';
-import { TimerService } from '../services/TimerService';
-import { ControlsService } from '../services/ControlsService';
 import { GameService } from '../services/GameService';
 
 interface GameParentProps {
     gameService: GameService;
-    controlsService: ControlsService;
     height: number;
 }
 
-const GameParent: React.FC<GameParentProps> = ({ gameService, controlsService, height }) => {
+const GameParent: React.FC<GameParentProps> = ({ gameService, height }) => {
     const [selectedTile, setSelectedTile] = useState<number | null>(null); // Based on tile idx
     const [selectedBoardTile, setSelectedBoardTile] = useState<number | null>(null); // Based on board idx
 
@@ -39,6 +33,7 @@ const GameParent: React.FC<GameParentProps> = ({ gameService, controlsService, h
     const boardService = gameService.getBoardService();
     const configService = gameService.getConfigService();
     const timerService = gameService.getTimerService();
+    const controlsService = gameService.getControlsService();
 
     const actionBarHeight = Math.floor(height / 8);
 

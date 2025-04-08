@@ -33,7 +33,6 @@ function App() {
         hideBar={toggleNavbar} />
       <GameParent
         gameService={gameService}
-        controlsService={controlsService}
         height={getBodyHeight()} />
       {
         showConfig &&

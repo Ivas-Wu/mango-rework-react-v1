@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import TileBoard from './TileBoard'
 import { Operator, TileProperties, TileState } from './TileModels';
-import { TileService } from '../../services/TilesService';
+import { TileService } from '../../services/TileService/TileService';
 import { TileBroadcastConstants } from '../../constants/EventConstants';
 
 interface TileParentProps {
@@ -57,9 +57,12 @@ const TileParent: React.FC<TileParentProps> = ({ tileService, selectedTile, sele
     };
 
     const setTiles = (newBt: TileProperties[], newAt: TileProperties[], setSelect = false) => {
-        setBasicTiles(newBt);
-        setAdvancedTiles(newAt);
-        if (setSelect) setSelectedTile(newAt[newAt.length - 1].idx)
+        setBasicTiles([...newBt]);
+        setAdvancedTiles([...newAt]);
+
+        if (setSelect && newAt.length > 0) {
+            setSelectedTile(newAt[newAt.length - 1].idx);
+        }
     };
 
     const getDynamicStyles = (): React.CSSProperties => {
