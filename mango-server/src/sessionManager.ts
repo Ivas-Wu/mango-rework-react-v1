@@ -1,12 +1,14 @@
 import { createClient } from 'redis';
-import { SessionMessage } from './types';
-import path, { dirname } from 'path';
+import { ClientRequest } from './types';
 import { Worker } from 'worker_threads';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 const workers = new Map<string, Worker>();
 
 const redisSub = createClient();
 const redisPub = createClient();
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export const initializeSessionManager = async () => {
     await redisSub.connect();
@@ -14,12 +16,16 @@ export const initializeSessionManager = async () => {
 
     redisSub.pSubscribe('session:*', (raw) => {
         try {
-            const msg: SessionMessage = JSON.parse(raw);
+            const msg: ClientRequest = JSON.parse(raw);
             let worker: Worker | undefined = workers.get(msg.session);
 
             if (!worker) {
                 try {
-                    const worker = new Worker('./src/sessionWorker.js');
+                    const workerScript = path.resolve(__dirname, './sessionWorker.ts');
+                    // Initialize worker with ts-node loader
+                    worker = new Worker(workerScript, {
+                        execArgv: ['--inspect', '--loader', 'ts-node/esm'],
+                    });
                     worker.on('error', (error) => {
                         console.error('Worker encountered an error:', error);
                     });
@@ -29,7 +35,7 @@ export const initializeSessionManager = async () => {
                         }
                     });
                     worker.on('online', () => {
-                        worker.postMessage(raw);
+                        worker?.postMessage(raw);
                     });
                     worker.on('message', (response) => {
                         redisPub.publish(`sessionResponse:${msg.session}`, response);

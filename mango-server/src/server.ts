@@ -1,15 +1,15 @@
 import express from 'express';
 import { WebSocketServer, WebSocket } from 'ws';
 import { createServer } from 'http';
-import { initializeSessionManager } from './sessionManager';
-import { handleClientConnection, initRedis, setRedisCallback } from './Logic/serverLogic';
+import { initializeSessionManager } from './sessionManager.ts';
+import { handleClientConnection, initRedis, setRedisCallback } from './Logic/serverLogic.ts';
 
 
 const app = express();
 const server = createServer(app);
 const wss = new WebSocketServer({ server });
 initializeSessionManager() // can be seperated out into its own service in future to scale independantly
-//setup redis
+// setup redis
 await initRedis();
 setRedisCallback();
 

@@ -1,8 +1,8 @@
 import { createClient } from 'redis';
 import { v4 as uuidv4 } from 'uuid';
 import { WebSocket } from 'ws';
-import { SessionMessage } from '../types';
-import { MessageTypeConstants } from '../Constants/requestConstants';
+import { ClientRequest } from '../types';
+import { MessageTypeConstants } from '../Constants/requestConstants.ts';
 
 const clientMap = new Map<string, WebSocket>();
 const redisPub = createClient();
@@ -16,7 +16,7 @@ export function handleClientConnection(ws: WebSocket) {
 
     ws.on('message', (raw) => {
         try {
-            const msg = JSON.parse(raw.toString()) as Partial<SessionMessage>;
+            const msg = JSON.parse(raw.toString()) as Partial<ClientRequest>;
             let sessionId: string;
             if (msg.type === MessageTypeConstants.CREATE_SESSION) {
                 sessionId = generateUniqueCode();
@@ -25,17 +25,31 @@ export function handleClientConnection(ws: WebSocket) {
             else if (msg.type === MessageTypeConstants.JOIN_SESSION && msg.session) {
                 sessionId = msg.session;
                 const requestId = uuidv4();
-                const sessionMsg: SessionMessage = {
+                const sessionMsg: ClientRequest = {
                     type: msg.type,
                     session: sessionId,
                     clientId,
                     requestId,
+                    data: msg.data
+                };
+
+                redisPub.publish(`session:${sessionId}`, JSON.stringify(sessionMsg));
+            }
+            else if (msg.type === MessageTypeConstants.TILE && msg.session) {
+                sessionId = msg.session;
+                const requestId = uuidv4();
+                const sessionMsg: ClientRequest = {
+                    type: msg.type,
+                    session: sessionId,
+                    clientId,
+                    requestId,
+                    data: msg.data
                 };
 
                 redisPub.publish(`session:${sessionId}`, JSON.stringify(sessionMsg));
             }
             else {
-                ws.send(JSON.stringify({ message: 'Invalid message type.'}));
+                // ws.send(JSON.stringify({ message: 'Invalid message type.'}));
             }
         } catch (err) {
             console.error('Bad message format', err);
@@ -54,10 +68,10 @@ export async function initRedis() {
 
 export function setRedisCallback() {
     redisSub.pSubscribe('sessionResponse:*', (raw) => {
-        const msg: SessionMessage = JSON.parse(raw);
+        const msg: ClientRequest = JSON.parse(raw);
         const client = clientMap.get(msg.clientId);
         if (client && client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify({ requestId: msg.requestId, number: msg.number }));
+            client.send(JSON.stringify({ requestId: msg.requestId, number: msg.data }));
         }
     });
 }

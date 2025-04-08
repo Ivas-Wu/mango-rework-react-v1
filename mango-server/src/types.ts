@@ -1,9 +1,16 @@
-import { MessageTypeConstants } from "./Constants/requestConstants";
+import { MessageTypeConstants } from "./Constants/requestConstants.ts";
 
-export interface SessionMessage {
+export interface ClientRequest {
     type: MessageTypeConstants;
     session: string;
     clientId: string;
     requestId: string;
-    number?: number;
+    data?: string;
+}
+
+export interface ClientResponse {
+    session: string;
+    clientId: string;
+    requestId: string;
+    data: string;
 }

@@ -8,9 +8,10 @@
         "outDir": "./dist",
         "rootDir": "./src",
         "resolveJsonModule": true,
-        "allowJs": true,
         "skipLibCheck": true,
-        "sourceMap": true
+        "sourceMap": true,
+        "allowImportingTsExtensions": true,
+        "noEmit": true,
     },
     "include": [
         "src/**/*"
