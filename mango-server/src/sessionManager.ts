@@ -1,5 +1,5 @@
 import { createClient } from 'redis';
-import { ClientRequest } from './types';
+import { ClientRequest, ClientResponse } from './messageTypes';
 import { Worker } from 'worker_threads';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -37,7 +37,7 @@ export const initializeSessionManager = async () => {
                     worker.on('online', () => {
                         worker?.postMessage(raw);
                     });
-                    worker.on('message', (response) => {
+                    worker.on('message', (response: string) => {
                         redisPub.publish(`sessionResponse:${msg.session}`, response);
                     });
                     workers.set(msg.session, worker);

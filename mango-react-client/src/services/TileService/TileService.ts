@@ -7,9 +7,7 @@ export abstract class TileService {
     protected advancedTiles: TileProperties[] = [];
     protected eventHandler!: EventEmitter;
 
-    protected abstract generateBasicTiles(): void;
     protected abstract reset(): void;
-
     public abstract basicOperation(idx1: number, idx2: number, operator: Operator): void;
     public abstract setTileUsed(idx: number): void;
     public abstract addTiles(fromTimer?: boolean): void;

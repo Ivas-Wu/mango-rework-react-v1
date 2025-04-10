@@ -1,37 +1,30 @@
-import { Operator, TileProperties, TileState } from '../Constants/TileConstants.ts';
+import EventEmitter from 'events';
+import { ReponseTypeConstants } from '../Constants/MessageConstants.ts';
+import { Operator, TileBroadcastConstants, TileProperties, TileState } from '../Constants/TileConstants.ts';
+import { ClientRequest, ClientResponse } from '../messageTypes.ts';
 import { ConfigService } from './ConfigService.ts';
 import { NumberService } from './NumberService.ts';
 
-export class TileService {
-    private tileIdx!: number;
+class TileSet {
     private basicTiles: TileProperties[] = [];
     private advancedTiles: TileProperties[] = [];
-    private numberService!: NumberService;
-    private configService!: ConfigService;
-
-    constructor(configService: ConfigService) {
-        this.tileIdx = 0;
-        this.configService = configService;
-        const size = this.configService.getBoardSize();
-        this.numberService = new NumberService(size);
+    private tileIdx: number = -1;
+    
+    constructor(base?: TileSet) {
+        this.basicTiles = base?.basicTiles ?? [];
+        this.advancedTiles = base?.advancedTiles ?? [];
     }
 
     private generateAdvancedTile(value: number, parents: number[]): TileProperties {
         const newTile: TileProperties = {
-            idx: this.tileIdx++,
+            idx: this.tileIdx--,
             value,
             state: TileState.UNUSED,
             parents,
             child: null,
         };
-        this.advancedTiles.push(newTile);
+        this.addAdvancedTile(newTile);
         return newTile;
-    }
-
-    private findAllAssociated(idx: number): number[] {
-        let baseTile = this.getTileFromIdx(idx);
-        while (baseTile.child) baseTile = baseTile.child;
-        return this.findAllParents(baseTile.idx);
     }
 
     private getTileFromIdx(idx: number): TileProperties {
@@ -49,23 +42,25 @@ export class TileService {
         return res;
     }
 
-    public generateBasicTiles(): void {
-        for (let i = 0; i < this.configService.getTilesToGen(); i++) {
-            this.basicTiles.push({
-                idx: this.tileIdx++,
-                value: this.numberService.generateCardNumber(),
-                state: TileState.UNUSED,
-                parents: [],
-                child: null,
-            });
-        }
+    private findAllAssociated(idx: number): number[] {
+        let baseTile = this.getTileFromIdx(idx);
+        while (baseTile.child) baseTile = baseTile.child;
+        return this.findAllParents(baseTile.idx);
+    }
+    
+    public addBasicTile(tile: TileProperties) {
+        this.basicTiles.push(tile);
     }
 
-    public reset(): void {
+    public addAdvancedTile(tile: TileProperties) {
+        this.advancedTiles.push(tile);
+    }
+
+    public reset() {
         this.basicTiles = [];
         this.advancedTiles = [];
     }
-
+    
     public clearTile(idx: number): void {
         const associated = this.findAllAssociated(idx);
         this.basicTiles = this.basicTiles.map(tile =>
@@ -123,5 +118,96 @@ export class TileService {
         this.advancedTiles = this.advancedTiles.map(tile =>
             tile.idx === idx ? { ...tile, state: TileState.USED } : tile
         );
+    }
+}
+
+export class TileService {
+    private tileIdx!: number;
+    private tileMap: Map<string, TileSet> = new Map();
+    private baseTileSet: TileSet = new TileSet(); // Basic set for searching and allowing new players to join
+    private numberService!: NumberService;
+    private configService!: ConfigService;
+    protected eventHandler!: EventEmitter;
+
+    constructor(configService: ConfigService) {
+        this.tileIdx = 0;
+        this.configService = configService;
+        const size = this.configService.getBoardSize();
+        this.numberService = new NumberService(size);
+        this.eventHandler = new EventEmitter();
+    }
+
+    private getTileSet(clientId: string): TileSet {
+        const tileSet: TileSet | undefined = this.tileMap.get(clientId);
+        if (!tileSet) {
+            throw Error();
+        }
+        return tileSet;
+    }
+
+    public on(event: TileBroadcastConstants, listener: (...args: any[]) => void): void {
+        this.eventHandler.on(event, listener);
+    }
+
+    public addClient(clientId: string) {
+        this.tileMap.set(clientId, new TileSet(this.baseTileSet));
+    }
+
+    public removeClient(clientId: string) {
+        this.tileMap.delete(clientId);
+    }
+
+    public getClientTiles(request: ClientRequest): ClientResponse {
+        const response: ClientResponse = {
+            type: ReponseTypeConstants.UPDATED_TILES,
+            clientId: request.clientId,
+            requestId: request.requestId,
+            session: request.session,
+            data: JSON.stringify(this.baseTileSet),
+        }
+        return response;
+    }
+
+    public getAllTiles(): Map<string, TileSet> {
+        return this.tileMap;
+    }
+
+    public generateBasicTiles(): void {
+        for (let i = 0; i < this.configService.getTilesToGen(); i++) {
+            let newTile: TileProperties = {
+                idx: this.tileIdx++,
+                value: this.numberService.generateCardNumber(),
+                state: TileState.UNUSED,
+                parents: [],
+                child: null,
+            }
+            this.baseTileSet.addBasicTile(newTile);
+            this.tileMap.forEach((value, key) => {
+                value.addBasicTile(newTile);
+            });
+        }
+        this.eventHandler.emit(TileBroadcastConstants.TILE_ADDED);
+    }
+
+    public reset(): void {
+        this.baseTileSet.reset();
+        this.tileMap.forEach((value, key) => {
+            value.reset();
+        });
+    }
+
+    public clearTile(idx: number, clientId: string): void {
+        const tileSet: TileSet = this.getTileSet(clientId);
+        tileSet.clearTile(idx);
+    }
+
+    public basicOperation(idx1: number, idx2: number, operator: Operator, clientId: string): void {
+        const tileSet: TileSet = this.getTileSet(clientId);
+        tileSet.basicOperation(idx1, idx2, operator);
+    }
+
+    public setTileUsed(idx: number, clientId: string): void {
+        const tileSet: TileSet = this.getTileSet(clientId);
+        tileSet.clearTile(idx);
     }
 }

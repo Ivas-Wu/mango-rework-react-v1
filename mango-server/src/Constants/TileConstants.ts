@@ -18,3 +18,7 @@ export enum Operator {
     MULTIPLY = 'x',
     DIVIDE = '/',
 }
+
+export enum TileBroadcastConstants {
+    TILE_ADDED = 'tile_added',
+}

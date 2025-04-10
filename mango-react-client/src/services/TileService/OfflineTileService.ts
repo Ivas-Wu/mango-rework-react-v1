@@ -20,7 +20,7 @@ export class OfflineTileService extends TileService {
         });
     }
 
-    protected generateBasicTiles(): void {
+    private generateBasicTiles(): void {
         for (let i = 0; i < this.configService.getTilesToGen(); i++) {
             this.basicTiles.push({
                 idx: this.tileIdx++,

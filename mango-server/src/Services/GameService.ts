@@ -1,41 +1,126 @@
 import { TileService } from "./TileService.ts";
 // import { BoardService } from "./BoardService";
 import { ConfigService } from "./ConfigService.ts";
-import { ClientRequest, ClientResponse } from "../types";
-// import { TimerService } from "./TimerService";
+import { ClientRequest, ClientResponse } from "../messageTypes.ts";
+import { TimerService } from "./TimerService.ts";
+import { TileBroadcastConstants } from "../Constants/TileConstants.ts";
+import { ReponseTypeConstants } from "../Constants/MessageConstants.ts";
 
 export class GameService {
     private tileService!: TileService;
     // private boardService!: BoardService;
     private configService!: ConfigService;
-    // private timerService!: TimerService;
-    private number = Math.random() * 100;
+    private timerService!: TimerService;
+    private sessionId!: string;
 
     constructor(boardSize: number, tilesToGen: number, timerInterval: number) {
         this.configService = new ConfigService(boardSize, tilesToGen, timerInterval);
         this.tileService = new TileService(this.configService);
         // this.boardService = new BoardService(this.configService);
-        // this.timerService = new TimerService(this.configService.getTimerInterval(), () => this.tileService.addTiles(true));
+        this.timerService = new TimerService(this.configService.getTimerInterval(), () => this.tileService.generateBasicTiles());
     }
 
-    public testStub(request: ClientRequest): ClientResponse {
+    public setSessionId(sessionId: string) {
+        this.sessionId = sessionId;
+    }
+
+    public setupTileServiceCallback(callback: () => void) {    
+        this.tileService.on(TileBroadcastConstants.TILE_ADDED, callback);
+    }
+
+    public startGame(request: ClientRequest): ClientResponse {
+        this.timerService.startTimer();
         const response: ClientResponse = {
+            type: ReponseTypeConstants.GAME_STATUS,
             clientId: request.clientId,
             requestId: request.requestId,
             session: request.session,
-            data: request.session,
+            data: JSON.stringify({ message: "Game started" }),
         }
         return response;
     }
 
-    public handleTileRequest(request: ClientRequest): ClientResponse {
+    public stopGame(request: ClientRequest): ClientResponse {
+        this.timerService.stopTimer();
         const response: ClientResponse = {
+            type: ReponseTypeConstants.GAME_STATUS,
             clientId: request.clientId,
             requestId: request.requestId,
             session: request.session,
-            data: JSON.stringify({ number: this.number }),
+            data: JSON.stringify({ message: "Game ended" }),
         }
         return response;
+    }
+
+    public addClient(clientId: string) {
+        this.tileService.addClient(clientId);
+    }
+
+    public removeClient(clientId: string) {
+        this.tileService.removeClient(clientId);
+    }
+
+    public getAllTiles(): ClientResponse[] {
+        let responses: ClientResponse[] = [];
+        const tileMap: Map<string, any> = this.tileService.getAllTiles();
+        tileMap.forEach((value, key) => {
+            let response: ClientResponse = {
+                type: ReponseTypeConstants.UPDATED_TILES,
+                clientId: key,
+                session: this.sessionId,
+                data: JSON.stringify(value),
+            }
+            responses.push(response);
+        });
+        return responses;
+    }
+
+    public getClientTiles(request: ClientRequest): ClientResponse {
+        return this.tileService.getClientTiles(request);
+    }
+
+    public clearTile(request: ClientRequest): void {
+        if (!request.data) {
+            throw Error();
+        }
+
+        const data = JSON.parse(request.data);
+
+        if (!data.idx) {
+            throw Error();
+        }
+
+        this.tileService.clearTile(data.idx, request.clientId);
+        // find board tile and clear TODO
+    }
+
+    public setTile(request: ClientRequest): void {
+        if (!request.data) {
+            throw Error();
+        }
+
+        const data = JSON.parse(request.data);
+
+        if (!data.idx) {
+            throw Error();
+        }
+
+        this.tileService.setTileUsed(data.idx, request.clientId);
+        // find board tile and set
+    }
+
+    public basicTileOperation(request: ClientRequest): void {
+        if (!request.data) {
+            throw Error();
+        }
+
+        const data = JSON.parse(request.data);
+
+        if (!data.idx1 || !data.idx2 || !data.operation) {
+            throw Error();
+        }
+
+        this.tileService.basicOperation(data.idx1, data.idx2, data.operation, request.clientId);
     }
 
     // public getBoardService(): BoardService {

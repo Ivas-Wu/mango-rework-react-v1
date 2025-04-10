@@ -1,24 +1,16 @@
 import { parentPort } from 'worker_threads';
-import { GameService } from './Services/GameService.ts';
-import { MessageTypeConstants } from './Constants/requestConstants.ts';
-
-const gameService = new GameService(3, 3, 15);
+import { handleClientMessage, gameService } from './Logic/sessionLogic.ts';
+import { ClientResponse } from './messageTypes.ts';
 
 parentPort?.on('message', (raw) => {
-    const msg = JSON.parse(raw);
-    let response;
-    switch (msg.type) {
-        case MessageTypeConstants.TILE:
-            response = gameService.handleTileRequest(msg);
-            break;
-        case MessageTypeConstants.JOIN_SESSION:
-            response = gameService.testStub(msg);
-            break;
-        default:
-            throw Error()
-    }
-    
-    parentPort?.postMessage(JSON.stringify(response));
+    parentPort?.postMessage(handleClientMessage(JSON.parse(raw)));
+})
+
+gameService.setupTileServiceCallback(() => {
+    const tileSets: ClientResponse[] = gameService.getAllTiles();
+    for (const tileSet of tileSets) {
+        parentPort?.postMessage(JSON.stringify(tileSet));
+    };
 })
 
 console.log(`Session worker is running`);
