@@ -59,10 +59,7 @@ const TileParent: React.FC<TileParentProps> = ({ tileService, selectedTile, sele
     const setTiles = (newBt: TileProperties[], newAt: TileProperties[], setSelect = false) => {
         setBasicTiles([...newBt]);
         setAdvancedTiles([...newAt]);
-
-        if (setSelect && newAt.length > 0) {
-            setSelectedTile(newAt[newAt.length - 1].idx);
-        }
+        setSelectedTile(setSelect && newAt.length > 0 ? newAt[newAt.length - 1].idx : null);
     };
 
     const getDynamicStyles = (): React.CSSProperties => {

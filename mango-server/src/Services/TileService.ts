@@ -4,16 +4,19 @@ import { Operator, TileBroadcastConstants, TileProperties, TileState } from '../
 import { ClientRequest, ClientResponse } from '../messageTypes.ts';
 import { ConfigService } from './ConfigService.ts';
 import { NumberService } from './NumberService.ts';
+import { LoggingService } from './LoggingService.ts';
 
 class TileSet {
     private basicTiles: TileProperties[] = [];
     private advancedTiles: TileProperties[] = [];
     private tileIdx: number = -1;
+    private loggingService: LoggingService = LoggingService.getInstance();
     
     constructor(base?: TileSet) {
-        this.basicTiles = base?.basicTiles ?? [];
-        this.advancedTiles = base?.advancedTiles ?? [];
+        this.basicTiles = base?.basicTiles ? [...base.basicTiles] : [];
+        this.advancedTiles = base?.advancedTiles ? [...base.advancedTiles] : [];
     }
+    
 
     private generateAdvancedTile(value: number, parents: number[]): TileProperties {
         const newTile: TileProperties = {
@@ -27,16 +30,19 @@ class TileSet {
         return newTile;
     }
 
-    private getTileFromIdx(idx: number): TileProperties {
+    private getTileFromIdx(idx: number): TileProperties | undefined {
         const tile = this.basicTiles.find(tile => tile.idx === idx) || this.advancedTiles.find(tile => tile.idx === idx);
-        if (!tile) throw new Error(`Tile not found with index ${idx}.`);
+        if (!tile)  { 
+            this.loggingService.logMessage(`Tile not found with index ${idx}.`);
+            return;
+        }
         return tile;
     }
 
     private findAllParents(idx: number): number[] {
         const tile = this.getTileFromIdx(idx);
         let res: number[] = [idx];
-        tile.parents.forEach((parentIdx: number) => {
+        tile?.parents.forEach((parentIdx: number) => {
             res = res.concat(this.findAllParents(parentIdx));
         });
         return res;
@@ -44,6 +50,7 @@ class TileSet {
 
     private findAllAssociated(idx: number): number[] {
         let baseTile = this.getTileFromIdx(idx);
+        if (!baseTile) return [];
         while (baseTile.child) baseTile = baseTile.child;
         return this.findAllParents(baseTile.idx);
     }
@@ -52,8 +59,16 @@ class TileSet {
         this.basicTiles.push(tile);
     }
 
+    public getBasicTiles(): TileProperties[] {
+        return this.basicTiles;
+    }
+
     public addAdvancedTile(tile: TileProperties) {
         this.advancedTiles.push(tile);
+    }
+
+    public getAdvancedTiles(): TileProperties[] {
+        return this.advancedTiles;
     }
 
     public reset() {
@@ -72,11 +87,13 @@ class TileSet {
         const tile1 = this.getTileFromIdx(idx1);
         const tile2 = this.getTileFromIdx(idx2);
 
-        if (tile1.state !== TileState.UNUSED || tile2.state !== TileState.UNUSED) {
-            throw new Error(`Tile cannot be used.`);
+        if (tile1?.state !== TileState.UNUSED || tile2?.state !== TileState.UNUSED) {
+            this.loggingService.logMessage(`Tile cannot be used.`);
+            return;
         }
         if (tile1 === tile2) {
-            throw new Error(`Same tile.`);
+            this.loggingService.logMessage(`Same tile.`);
+            return;
         }
 
         let result: number;
@@ -93,12 +110,14 @@ class TileSet {
             case Operator.DIVIDE:
                 const value = tile1.value / tile2.value;
                 if (value !== Math.floor(value)) {
-                    throw new Error("Cannot be divided");
+                    this.loggingService.logMessage("Cannot be divided");
+                    return;
                 }
                 result = value;
                 break;
             default:
-                throw new Error(`Invalid operator: ${operator}`);
+                this.loggingService.logMessage(`Invalid operator: ${operator}`);
+                return;
         }
 
         const newTile = this.generateAdvancedTile(result, [tile1.idx, tile2.idx]);
@@ -127,6 +146,7 @@ export class TileService {
     private baseTileSet: TileSet = new TileSet(); // Basic set for searching and allowing new players to join
     private numberService!: NumberService;
     private configService!: ConfigService;
+    private loggingService: LoggingService = LoggingService.getInstance();
     protected eventHandler!: EventEmitter;
 
     constructor(configService: ConfigService) {
@@ -157,13 +177,18 @@ export class TileService {
         this.tileMap.delete(clientId);
     }
 
-    public getClientTiles(request: ClientRequest): ClientResponse {
+    public getClientTiles(request: ClientRequest, selectLatest: boolean): ClientResponse {
+        const tileSet: TileSet = this.getTileSet(request.clientId);
         const response: ClientResponse = {
             type: ReponseTypeConstants.UPDATED_TILES,
             clientId: request.clientId,
             requestId: request.requestId,
             session: request.session,
-            data: JSON.stringify(this.baseTileSet),
+            data: JSON.stringify({ 
+                basicTiles: tileSet.getBasicTiles(), 
+                advancedTiles: tileSet.getAdvancedTiles(),
+                selectLatest, 
+            }),
         }
         return response;
     }

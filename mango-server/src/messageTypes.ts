@@ -11,8 +11,8 @@ export interface ClientRequest {
 
 export interface ClientResponse {
     type: ReponseTypeConstants;
-    session: string;
+    session?: string;
     clientId: string;
     requestId?: string;
-    data: string;
+    data?: string;
 }

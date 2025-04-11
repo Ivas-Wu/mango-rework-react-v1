@@ -2,7 +2,7 @@ import { createClient } from 'redis';
 import { v4 as uuidv4 } from 'uuid';
 import { WebSocket } from 'ws';
 import { ClientRequest, ClientResponse } from '../messageTypes.ts';
-import { MessageClassConstants, MessageTypeConstants } from '../Constants/MessageConstants.ts';
+import { MessageClassConstants, MessageTypeConstants, ReponseTypeConstants } from '../Constants/MessageConstants.ts';
 
 const clientMap = new Map<string, WebSocket>();
 const sessionMap = new Map<string, number>();
@@ -46,20 +46,27 @@ function publishRedisMessage(key: string, message: string) { //extract to servic
 }
 
 function onConnect(ws: WebSocket, clientId: string) {
-    sendClient(ws, { clientId, message: 'Connected' });
+    const response: ClientResponse = {
+        type: ReponseTypeConstants.CONNECTION_STATUS,
+        clientId,
+    }
+    sendClient(ws, response);
 }
 
 function onMessage(ws: WebSocket, clientId: string, rawData: any) {
     try {
         const msg = JSON.parse(rawData.toString()) as Partial<ClientRequest>;
-        switch (msg.class) {
-            case MessageClassConstants.CONNECTION:
-                if (msg.type === MessageTypeConstants.CREATE_SESSION) {
-                    sendClient(ws, { sessionId: generateUniqueCode(), message: 'Session created' });
-                }
-                break;
-            default:
-                publishRedisMessage(`session:${msg.session}`, JSON.stringify(createClientRequest(msg, clientId)));
+        if (msg.class === MessageClassConstants.CONNECTION && msg.type === MessageTypeConstants.CREATE_SESSION) {
+            const session = generateUniqueCode();
+            const response: ClientResponse = {
+                type: ReponseTypeConstants.CONNECTION_STATUS,
+                clientId,
+                session,
+            }
+            publishRedisMessage(`createsession:${msg.session}`, JSON.stringify(response));
+        }
+        else {
+            publishRedisMessage(`session:${msg.session}`, JSON.stringify(createClientRequest(msg, clientId)));
         }
     } catch (err) {
         console.error('Bad message format', err);
@@ -73,9 +80,11 @@ function onClose(clientId: string) {
 
 function sessionResponse(message: string) {
     const msg: ClientResponse = JSON.parse(message);
+    if (!msg.clientId) return; // CAN rip out client id from here
+
     const client = clientMap.get(msg.clientId);
     if (client) {
-        if (client.readyState === WebSocket.OPEN) sendClient(client, message);
+        if (client.readyState === WebSocket.OPEN) sendClient(client, msg);
         // If the client is no longer connected, remove it from the lookup and ensure it is cleaned out of the session workers
         else if (client.readyState > WebSocket.OPEN) {
             clientMap.delete(msg.clientId);

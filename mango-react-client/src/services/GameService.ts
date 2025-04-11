@@ -5,6 +5,7 @@ import { TimerService } from "./TimerService";
 import { OfflineTileService } from "./TileService/OfflineTileService";
 import { ControlsService } from "./ControlsService";
 import { OnlineTileService } from "./TileService/OnlineTileService";
+import { WebsocketService } from "./WebsocketService";
 
 export class GameService {
     private tileService!: TileService;
@@ -12,18 +13,21 @@ export class GameService {
     private configService!: ConfigService;
     private timerService!: TimerService;
     private controlsService: ControlsService
+    private wsService: WebsocketService | null = null;
 
-    private online: boolean = false;
-    private wsURL: string = 'ws://localhost:3001';
+    private online: boolean = true;
 
     private static instance: GameService;
 
     private constructor() {
-        if (!this.online) {
-            this.tileService = new OnlineTileService(this.wsURL, 'ASDC');
+        if (this.online) {
+            this.wsService = new WebsocketService();
+            this.tileService = new OnlineTileService(this.wsService);
+        }
+        else {
+            this.tileService = new OfflineTileService(this.configService);
         }
         this.configService = new ConfigService();
-        this.tileService = new OfflineTileService(this.configService);
         this.boardService = new BoardService(this.configService);
         this.timerService = new TimerService(this.configService.getTimerInterval(), () => this.tileService.addTiles(true));
         this.controlsService = ControlsService.getInstance();

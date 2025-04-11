@@ -3,6 +3,7 @@ import { ClientRequest, ClientResponse } from './messageTypes';
 import { Worker } from 'worker_threads';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { ReponseTypeConstants } from './Constants/MessageConstants';
 
 const workers = new Map<string, Worker>();
 
@@ -14,7 +15,7 @@ export const initializeSessionManager = async () => {
     await redisSub.connect();
     await redisPub.connect();
 
-    redisSub.pSubscribe('session:*', (raw) => {
+    redisSub.pSubscribe('createsession:*', (raw) => {
         try {
             const msg: ClientRequest = JSON.parse(raw);
             let worker: Worker | undefined = workers.get(msg.session);
@@ -35,7 +36,12 @@ export const initializeSessionManager = async () => {
                         }
                     });
                     worker.on('online', () => {
-                        worker?.postMessage(raw);
+                        const response: ClientResponse = {
+                            type: ReponseTypeConstants.CONNECTION_STATUS,
+                            clientId: msg.clientId,
+                            session: msg.session,
+                        }
+                        redisPub.publish(`sessionResponse:${msg.session}`, JSON.stringify(response));
                     });
                     worker.on('message', (response: string) => {
                         redisPub.publish(`sessionResponse:${msg.session}`, response);
@@ -45,9 +51,18 @@ export const initializeSessionManager = async () => {
                     console.error('Failed to initialize worker:', error);
                 }
             }
-            else {
-                worker.postMessage(raw);
-            }
+        } catch (err) {
+            console.error('Error processing Redis message:', err);
+        }
+    });
+
+    redisSub.pSubscribe('session:*', (raw) => {
+        try {
+            const msg: ClientRequest = JSON.parse(raw);
+            let worker: Worker | undefined = workers.get(msg.session);
+
+            if (worker) worker.postMessage(raw);
+            // pass back error saying session doesnt exist
         } catch (err) {
             console.error('Error processing Redis message:', err);
         }

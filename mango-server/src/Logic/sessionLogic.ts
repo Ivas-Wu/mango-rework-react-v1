@@ -86,6 +86,7 @@ function handleGameMessage(message: ClientRequest): ClientResponse {
 }
 
 function handleTileMessage(message: ClientRequest): ClientResponse {
+    let selectLatest: boolean = false;
     switch (message.type) {
         case MessageTypeConstants.GET_TILE: //Should only be used for desyncs and debugging
             break;
@@ -97,11 +98,12 @@ function handleTileMessage(message: ClientRequest): ClientResponse {
             break;
         case MessageTypeConstants.OPERATION_TILE:
             gameService.basicTileOperation(message);
+            selectLatest = true;
             break;
         default:
             throw Error();
     }
-    return gameService.getClientTiles(message);
+    return gameService.getClientTiles(message, selectLatest);
 }
 
 function handleBoardMessage(message: ClientRequest): ClientResponse {

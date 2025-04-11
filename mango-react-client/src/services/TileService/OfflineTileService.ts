@@ -32,7 +32,7 @@ export class OfflineTileService extends TileService {
         }
     }
 
-    protected reset(): void {
+    private reset(): void {
         this.basicTiles = [];
         this.advancedTiles = [];
         this.broadCastTilesUpdated();

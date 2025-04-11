@@ -3,11 +3,10 @@ import { Operator, TileProperties } from '../../components/Tiles/TileModels';
 import { TileBroadcastConstants } from '../../constants/EventConstants';
 
 export abstract class TileService {
-    protected basicTiles: TileProperties[] = [];
-    protected advancedTiles: TileProperties[] = [];
+    protected basicTiles!: TileProperties[];
+    protected advancedTiles!: TileProperties[];
     protected eventHandler!: EventEmitter;
 
-    protected abstract reset(): void;
     public abstract basicOperation(idx1: number, idx2: number, operator: Operator): void;
     public abstract setTileUsed(idx: number): void;
     public abstract addTiles(fromTimer?: boolean): void;
@@ -15,6 +14,8 @@ export abstract class TileService {
 
     protected constructor() {
         this.eventHandler = new EventEmitter();
+        this.basicTiles = [];
+        this.advancedTiles = [];
     }
 
     protected broadCastTilesUpdated(operation: boolean = false): void {

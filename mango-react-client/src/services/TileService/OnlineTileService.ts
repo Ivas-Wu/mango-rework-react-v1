@@ -1,65 +1,43 @@
 import { Operator } from '../../components/Tiles/TileModels';
-import { ClientRequest, MessageClassConstants, MessageTypeConstants } from '../../constants/MessageTypes';
+import { ClientResponse, MessageClassConstants, MessageTypeConstants, ReponseTypeConstants } from '../../constants/MessageTypes';
+import { WebsocketService } from '../WebsocketService';
 import { TileService } from './TileService';
 
 export class OnlineTileService extends TileService {
-    private socket!: WebSocket;
-    private sessionId!: string;
+    private wsService!: WebsocketService;
 
-    constructor(wsURL: string, sessionId: string) {
+    constructor(wsService: WebsocketService) {
         super();
-        this.sessionId = sessionId;
-        this.socket = new WebSocket(wsURL);
-        // Event: Connection opened
-        this.socket.onopen = (event: Event) => {
-            console.log("WebSocket connection opened:", event);
-        };
-
-        this.socket.onmessage = (event: MessageEvent) => {
-            console.log("Message from server:", event.data);
-            try {
-                const message = JSON.parse(event.data);
-                console.log("Parsed message:", message);
-            } catch (e) {
-                console.warn("Failed to parse message as JSON:", event.data);
-            }
-        };
-
-        // Event: Error occurred
-        this.socket.onerror = (event: Event) => {
-            console.error("WebSocket error:", event);
-        };
-
-        // Event: Connection closed
-        this.socket.onclose = (event: CloseEvent) => {
-            console.log("WebSocket connection closed:", event);
-        };
+        this.wsService = wsService;
+        this.wsService.addEventListener(ReponseTypeConstants.UPDATED_TILES, this.handleResponse.bind(this));
     }
 
-    protected reset(): void {
-        this.broadCastTilesUpdated();
+    private handleResponse(message: ClientResponse) {
+        console.log("testing: ", message);
+        if (!message.data) return;
+        const data: any = JSON.parse(message.data);
+        this.basicTiles = data.basicTiles;
+        this.advancedTiles = data.advancedTiles;
+        this.broadCastTilesUpdated(data.selectLatest);
     }
 
-    public addTiles(fromTimer: boolean = false): void {
-        // never need to add tiles but need this stub
+    private sendRequest(type: MessageTypeConstants, data? : string): void {
+        this.wsService.sendRequest(MessageClassConstants.TILE, type, data);
+    }
+
+    public addTiles(fromTimer: boolean = false): void { //For testing only
+        this.wsService.sendRequest(MessageClassConstants.GAME, MessageTypeConstants.GAME_START);
     }
 
     public clearTile(idx: number): void {
-        const request: ClientRequest = {
-            class: MessageClassConstants.TILE,
-            type: MessageTypeConstants.CLEAR_TILE,
-            session: this.sessionId,
-            data: JSON.stringify({ idx }),
-        }
-        this.socket.send(JSON.stringify(request));
-        this.broadCastTilesUpdated();
+        this.sendRequest(MessageTypeConstants.CLEAR_TILE, JSON.stringify({ idx }));
     }
 
     public basicOperation(idx1: number, idx2: number, operator: Operator): void {
-        this.broadCastTilesUpdated(true);
+        this.sendRequest(MessageTypeConstants.OPERATION_TILE, JSON.stringify({ idx1, idx2, operator }));
     }
 
     public setTileUsed(idx: number): void {
-        this.broadCastTilesUpdated();
+        this.sendRequest(MessageTypeConstants.CLEAR_TILE, JSON.stringify({ idx }));
     }
 }

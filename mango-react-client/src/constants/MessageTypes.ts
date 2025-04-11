@@ -41,12 +41,14 @@ export const enum ReponseTypeConstants{
 export interface ClientRequest {
     class: MessageClassConstants;
     type: MessageTypeConstants;
-    session: string;
+    session?: string;
     data?: string;
 }
 
 export interface ClientResponse {
-    type: ReponseTypeConstants;
-    session: string;
-    data: string;
+    type?: ReponseTypeConstants;
+    session?: string;
+    clientId?: string;
+    data?: string;
+    message?: string;
 }

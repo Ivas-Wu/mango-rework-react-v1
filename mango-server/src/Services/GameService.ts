@@ -75,52 +75,40 @@ export class GameService {
         return responses;
     }
 
-    public getClientTiles(request: ClientRequest): ClientResponse {
-        return this.tileService.getClientTiles(request);
+    public getClientTiles(request: ClientRequest, selectLatest: boolean = false): ClientResponse {
+        return this.tileService.getClientTiles(request, selectLatest);
     }
 
     public clearTile(request: ClientRequest): void {
-        if (!request.data) {
-            throw Error();
-        }
+        if (!request.data) return;
 
         const data = JSON.parse(request.data);
 
-        if (!data.idx) {
-            throw Error();
-        }
+        if (!data.idx) return;
 
         this.tileService.clearTile(data.idx, request.clientId);
         // find board tile and clear TODO
     }
 
     public setTile(request: ClientRequest): void {
-        if (!request.data) {
-            throw Error();
-        }
+        if (!request.data) return;
 
         const data = JSON.parse(request.data);
 
-        if (!data.idx) {
-            throw Error();
-        }
+        if (!data.idx) return;
 
         this.tileService.setTileUsed(data.idx, request.clientId);
         // find board tile and set
     }
 
     public basicTileOperation(request: ClientRequest): void {
-        if (!request.data) {
-            throw Error();
-        }
+        if (!request.data) return;
 
         const data = JSON.parse(request.data);
 
-        if (!data.idx1 || !data.idx2 || !data.operation) {
-            throw Error();
-        }
+        if (data.idx1 === undefined || data.idx2 === undefined || data.operator === undefined) return;
 
-        this.tileService.basicOperation(data.idx1, data.idx2, data.operation, request.clientId);
+        this.tileService.basicOperation(data.idx1, data.idx2, data.operator, request.clientId);
     }
 
     // public getBoardService(): BoardService {
