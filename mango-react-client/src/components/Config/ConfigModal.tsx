@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ConfigService } from '../../services/ConfigService';
+import { ConfigService } from '../../services/ConfigService/ConfigService';
 import ConfigSlider from './ConfigSlider';
 
 interface ConfigModalProps {

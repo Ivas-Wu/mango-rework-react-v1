@@ -5,18 +5,19 @@ import { ClientRequest, ClientResponse } from '../messageTypes.ts';
 import { ConfigService } from './ConfigService.ts';
 import { NumberService } from './NumberService.ts';
 import { LoggingService } from './LoggingService.ts';
+import { BaseClass } from './BaseService.ts';
 
 class TileSet {
     private basicTiles: TileProperties[] = [];
     private advancedTiles: TileProperties[] = [];
     private tileIdx: number = -1;
     private loggingService: LoggingService = LoggingService.getInstance();
-    
+
     constructor(base?: TileSet) {
         this.basicTiles = base?.basicTiles ? [...base.basicTiles] : [];
         this.advancedTiles = base?.advancedTiles ? [...base.advancedTiles] : [];
     }
-    
+
 
     private generateAdvancedTile(value: number, parents: number[]): TileProperties {
         const newTile: TileProperties = {
@@ -32,7 +33,7 @@ class TileSet {
 
     private getTileFromIdx(idx: number): TileProperties | undefined {
         const tile = this.basicTiles.find(tile => tile.idx === idx) || this.advancedTiles.find(tile => tile.idx === idx);
-        if (!tile)  { 
+        if (!tile) {
             this.loggingService.logMessage(`Tile not found with index ${idx}.`);
             return;
         }
@@ -54,7 +55,7 @@ class TileSet {
         while (baseTile.child) baseTile = baseTile.child;
         return this.findAllParents(baseTile.idx);
     }
-    
+
     public addBasicTile(tile: TileProperties) {
         this.basicTiles.push(tile);
     }
@@ -75,7 +76,7 @@ class TileSet {
         this.basicTiles = [];
         this.advancedTiles = [];
     }
-    
+
     public clearTile(idx: number): void {
         const associated = this.findAllAssociated(idx);
         this.basicTiles = this.basicTiles.map(tile =>
@@ -140,23 +141,23 @@ class TileSet {
     }
 }
 
-export class TileService {
+export class TileService extends BaseClass {
     private tileIdx!: number;
     private tileMap: Map<string, TileSet> = new Map();
     private baseTileSet: TileSet = new TileSet(); // Basic set for searching and allowing new players to join
     private numberService!: NumberService;
     private configService!: ConfigService;
-    private loggingService: LoggingService = LoggingService.getInstance();
     protected eventHandler!: EventEmitter;
 
     constructor(configService: ConfigService) {
+        super();
         this.tileIdx = 0;
         this.configService = configService;
-        const size = this.configService.getBoardSize();
-        this.numberService = new NumberService(size);
+        this.numberService = new NumberService(this.configService.getBoardSize());
         this.eventHandler = new EventEmitter();
     }
 
+    //#region SESSION MANAGEMENT
     private getTileSet(clientId: string): TileSet {
         const tileSet: TileSet | undefined = this.tileMap.get(clientId);
         if (!tileSet) {
@@ -177,26 +178,40 @@ export class TileService {
         this.tileMap.delete(clientId);
     }
 
-    public getClientTiles(request: ClientRequest, selectLatest: boolean): ClientResponse {
+    public createResponse(request: ClientRequest, selectLatest: boolean, data?: string): ClientResponse {
         const tileSet: TileSet = this.getTileSet(request.clientId);
-        const response: ClientResponse = {
-            type: ReponseTypeConstants.UPDATED_TILES,
-            clientId: request.clientId,
-            requestId: request.requestId,
-            session: request.session,
-            data: JSON.stringify({ 
-                basicTiles: tileSet.getBasicTiles(), 
-                advancedTiles: tileSet.getAdvancedTiles(),
-                selectLatest, 
-            }),
-        }
-        return response;
+        const dataResponse: string = data ?? JSON.stringify({
+            basicTiles: tileSet.getBasicTiles(),
+            advancedTiles: tileSet.getAdvancedTiles(),
+            selectLatest,
+        });
+        return this.createClientResponse(
+            ReponseTypeConstants.UPDATED_TILES,
+            request,
+            dataResponse
+        );
     }
 
-    public getAllTiles(): Map<string, TileSet> {
-        return this.tileMap;
+    public getAllClientTiles(session: string): ClientResponse[] {
+        let responses: ClientResponse[] = [];
+        this.tileMap.forEach((value, key) => {
+            let response: ClientResponse = {
+                type: ReponseTypeConstants.UPDATED_TILES,
+                clientId: key,
+                session: session,
+                data: JSON.stringify(value),
+            }
+            responses.push(response);
+        });
+        return responses;
     }
 
+    public updateNumberService(boardSize: number) {
+        this.numberService.setBoardSize(boardSize);
+    }
+    //#endregion
+
+    //#region TILE LOGIC
     public generateBasicTiles(): void {
         for (let i = 0; i < this.configService.getTilesToGen(); i++) {
             let newTile: TileProperties = {
@@ -233,6 +248,7 @@ export class TileService {
 
     public setTileUsed(idx: number, clientId: string): void {
         const tileSet: TileSet = this.getTileSet(clientId);
-        tileSet.clearTile(idx);
+        tileSet.setTileUsed(idx);
     }
+    //#endregion
 }

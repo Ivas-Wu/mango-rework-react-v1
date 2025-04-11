@@ -1,7 +1,7 @@
 import EventEmitter from "events";
 import { BoardTileProperties, BoardTileState } from "../components/Board/BoardTileModels";
 import { NumberService } from "./NumberService";
-import { ConfigService } from "./ConfigService";
+import { ConfigService } from "./ConfigService/ConfigService";
 import { BoardBroadcastConstants, ConfigBroadcastConstants } from "../constants/EventConstants";
 
 export class BoardService {

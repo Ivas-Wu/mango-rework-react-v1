@@ -1,5 +1,5 @@
 import { Operator, TileProperties, TileState } from '../../components/Tiles/TileModels';
-import { ConfigService } from '../ConfigService';
+import { ConfigService } from '../ConfigService/ConfigService';
 import { NumberService } from '../NumberService';
 import { TileService } from './TileService';
 import { ConfigBroadcastConstants } from '../../constants/EventConstants';

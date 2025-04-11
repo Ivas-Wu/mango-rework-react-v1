@@ -103,14 +103,14 @@ function handleTileMessage(message: ClientRequest): ClientResponse {
         default:
             throw Error();
     }
-    return gameService.getClientTiles(message, selectLatest);
+    return gameService.getClientTilesResponse(message, selectLatest);
 }
 
 function handleBoardMessage(message: ClientRequest): ClientResponse {
     let response: ClientResponse;
     switch (message.type) {
         case MessageTypeConstants.JOIN_SESSION:
-            response = gameService.getClientTiles(message);
+            response = gameService.getClientTilesResponse(message);
             break;
         default:
             throw Error();
@@ -119,13 +119,12 @@ function handleBoardMessage(message: ClientRequest): ClientResponse {
 }
 
 function handleConfigMessage(message: ClientRequest): ClientResponse {
-    let response: ClientResponse;
     switch (message.type) {
-        case MessageTypeConstants.JOIN_SESSION:
-            response = gameService.getClientTiles(message);
+        case MessageTypeConstants.SET_CONFIGS:
+            gameService.setConfigs(message);
             break;
         default:
             throw Error();
     }
-    return response;
+    return gameService.getConfigReponse(message);
 }

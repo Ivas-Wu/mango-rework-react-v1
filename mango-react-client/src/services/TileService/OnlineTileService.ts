@@ -38,6 +38,6 @@ export class OnlineTileService extends TileService {
     }
 
     public setTileUsed(idx: number): void {
-        this.sendRequest(MessageTypeConstants.CLEAR_TILE, JSON.stringify({ idx }));
+        this.sendRequest(MessageTypeConstants.SET_TILE, JSON.stringify({ idx }));
     }
 }

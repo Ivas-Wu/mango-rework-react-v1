@@ -28,6 +28,7 @@ export const enum MessageTypeConstants{
     GET_BOARD = 'get_board',
 
     // CONFIG
+    SET_CONFIGS = 'set_configs',
 }
 
 export const enum ReponseTypeConstants{

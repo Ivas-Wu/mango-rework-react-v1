@@ -1,21 +1,11 @@
-import EventEmitter from "events";
-import { ConfigDefaults } from "../constants/Defaults";
-import { ConfigBroadcastConstants } from "../constants/EventConstants";
-import { ConfigConstants } from "../constants/StorageDefaults";
+import { ConfigDefaults } from "../../constants/Defaults";
+import { ConfigBroadcastConstants } from "../../constants/EventConstants";
+import { ConfigConstants } from "../../constants/StorageDefaults";
+import { ConfigService } from "./ConfigService";
 
-export class ConfigService {
-    private boardSize!: number;
-    private tilesToGen!: number;
-
-    private timerMode!: boolean;
-    private canPause!: boolean;
-    private timerInterval!: number;
-
-    private eventHandler!: EventEmitter;
-
+export class OfflineConfigService extends ConfigService {
     constructor() {
-        this.eventHandler = new EventEmitter();
-
+        super();
         this.setBoardSize(Number(this.getStorageValue(ConfigConstants.BOARD_SIZE)) || ConfigDefaults.BOARD_SIZE);
         this.setTilesToGen(Number(this.getStorageValue(ConfigConstants.TILES_TO_GEN)) || ConfigDefaults.TILES_TO_GEN);
         this.setTimerMode(this.getStorageValue(ConfigConstants.TIMER_MODE)?.toLowerCase() === 'true' || ConfigDefaults.TIMER_MODE);
@@ -29,26 +19,6 @@ export class ConfigService {
 
     private setStorageValue(key: ConfigConstants, value: any) {
         localStorage.setItem(key, String(value));
-    }
-
-    public getBoardSize(): number {
-        return this.boardSize;
-    }
-
-    public getTilesToGen(): number {
-        return this.tilesToGen;
-    }
-
-    public getTimerMode(): boolean {
-        return this.timerMode;
-    }
-
-    public getCanPause(): boolean {
-        return this.canPause;
-    }
-
-    public getTimerInterval(): number {
-        return this.timerInterval;
     }
 
     private setBoardSize(boardSize: number) {
@@ -79,16 +49,12 @@ export class ConfigService {
         this.timerInterval = time;
     }
 
-    public on(event: ConfigBroadcastConstants, listener: (...args: any[]) => void): void {
-        this.eventHandler.on(event, listener);
-    }
-
     public save(boardSize: number, tilesToGen: number, timerMode: boolean, canPause: boolean, timerInterval: number) {
         this.setBoardSize(boardSize);
         this.setTilesToGen(tilesToGen);
         this.setTimerMode(timerMode);
         this.setCanPause(canPause);
         this.setTimerInterval(timerInterval);
-        this.eventHandler.emit(ConfigBroadcastConstants.CONFIGS_UPDATED, this.boardSize);
+        this.broadCastConfigUpdated();
     }
 }
